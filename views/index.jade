@@ -1,0 +1,109 @@
+extends layout
+
+block content
+    div.row
+        div.col-lg-8
+            div.map-container
+                div#map
+        div.col-lg-4
+            div.cards-container
+                each event, i in events
+                    div.card.mb-4.event(data-place=event.venue.place_id, data-lat=event.venue.lat, data-lng=event.venue.lng, data-id=i)
+                        div.card-img-top(style="background: url('#{event.venue.image}') no-repeat center; background-size: cover;")
+                        div.card-img-overlay
+                            h5.card-title #{event.title}
+                            br
+                            h6.card-text #{event.venue.name}
+                            br
+                            p.card-text.event-date #{event.event_date}
+
+                        div.card-body
+                            table.table
+                                tr
+                                    td
+                                        p.card-text.text-left #{event.time}
+                                    td
+                                        p.card-text.text-right #{event.price}
+                                    td
+                                        p.card-text.text-left #{event.age}
+                            div.tags
+                                each organizer, i in event.organizers
+                                    div.tag(data-color=i)=organizer
+                                each tag, i in event.tags
+                                    div.tag(data-color=(i+event.organizers.length))=tag
+
+    script.
+        let tags = document.querySelectorAll('.tag');
+        for (let i=0; i<tags.length; i++) {
+            tags[i].style.background = TAG_COLORS[tags[i].dataset.color];
+        }
+
+        var map;
+        var infowindow;
+        function initMap() {
+            var map_elem = document.getElementById('map');
+            var Los_Angeles = { lat: 34.0522, lng: -118.2437 };
+
+            map = new google.maps.Map(map_elem, {
+                zoom: 10,
+                center: Los_Angeles
+            });
+
+            infowindow = new google.maps.InfoWindow();
+
+        }
+
+        function createMarker(place, event_elem) {
+            let marker = new google.maps.Marker({
+                map: map,
+                place: {
+                    placeId: place.place_id,
+                    location: place.location,
+                }
+            });
+
+            google.maps.event.addListener(marker, 'click', function() {
+                  infowindow.setContent(event_elem);
+                  infowindow.open(map, this);
+            });
+            return marker;
+        }
+
+
+
+        var markers;
+        $(document).ready(function(){
+            markers = [];
+            const events = document.querySelectorAll('.event');
+            for (let i=0; i<events.length; i++) {
+                let event = events[i];
+                let marker = null;
+                markers.push(marker);
+
+                let title = event.querySelector('.card-title').textContent;
+
+                let info_event = 
+                `<div class='event-infowindow'>
+                    <h4 class='card-title'>${title}</h4>
+                </div>`;
+                event.addEventListener('click', function() {
+                    infowindow.setContent(info_event);
+                    infowindow.open(map, markers[i]);
+                });
+                if (event.dataset.place) {
+                    let place = {
+                        place_id: event.dataset.place,
+                        location: {
+                            lat: parseFloat(event.dataset.lat),
+                            lng: parseFloat(event.dataset.lng)
+                        }
+                    };
+                    markers[i] = createMarker(place, info_event);
+                }
+            }
+        });
+        
+
+
+
+    script(src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBt7N2A8ozXg-xf7wYHxT8eK7UpZ-83eZU&callback=initMap")

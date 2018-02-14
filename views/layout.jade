@@ -1,0 +1,20 @@
+doctype html
+html
+  head
+    title= title
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css', media='screen')
+    link(rel='stylesheet', href='//vjs.zencdn.net/5.19/video-js.min.css')
+    link(rel='stylesheet', href='/css/style.css')
+    script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js')
+    script(src='/js/colors.js')
+  body
+    div.page-cover
+      svg.spinner(width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg")
+        circle.path(fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30")
+
+    
+    block content
+
+  script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js')
+  script(src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js')

@@ -1,0 +1,16 @@
+extends layout
+
+block content
+    div.container(style="margin-top: 100px;")
+        div.card-columns
+            each venue in venues
+                div.card
+                    div.card-img-top(style="height: 200px;  width: 100%; background: url('#{venue.image}') no-repeat center; background-size: cover;")
+                    div.card-body
+                        h4.card-title #{venue.name}
+                        p.card-text #{venue.rating} 
+                            for i in Array(venue.price_level)
+                                ='$'
+                        p.card-text
+                            small.text-muted #{venue.created_at}
+                        

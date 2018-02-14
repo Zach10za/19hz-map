@@ -1,0 +1,131 @@
+.App {
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-header {
+  background-color: #222;
+  height: 150px;
+  padding: 20px;
+  color: white;
+}
+
+.App-title {
+  font-size: 1.5em;
+}
+
+.App-intro {
+  font-size: large;
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.row {
+  margin: 0;
+}
+.page-cover {
+  display: none;
+}
+.map-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 66vw;
+}
+#map {
+  height: 100vh;
+  width: 100%;
+}
+.cards-container {
+  padding-top: 30px;
+}
+.card {
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+.card:hover {
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  cursor: pointer;
+}
+.card-img-top {
+  height: 150px;
+  width: 100%; 
+}
+.card-img-overlay .card-title, .card-img-overlay .card-text {
+  display: inline;
+  background: rgba(0,0,0,0.9);
+  color: #FFF;
+  padding: 3px 0;
+  line-height: 33px;
+  box-shadow: 10px 0 0 rgba(0,0,0,0.9), -10px 0 0 rgba(0,0,0,0.9);
+}
+.card-img-overlay .event-date {
+  position: absolute;
+  right: 0;
+  top: 110px;
+  line-height: 30px;
+  padding: 5px 10px;
+  box-shadow: none;
+  background: rgba(247, 120, 9, 0.9);
+}
+
+.tag {
+  border-radius: 3px;
+  margin: 2px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: #FFF;
+  display: inline-block;
+}
+
+.map-marker {
+  transition: 0.2s;
+  background: #41bef4;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  font-size: 10px;
+  text-align: center;
+  transform: translateY(-50%) translateX(-50%);
+}
+.map-marker:hover {
+  background: #f45342;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+}
+.infowindow {
+  width: 300px;
+  max-height: 400px;
+  overflow-y: scroll;
+  background: #FFF;
+  position: absolute;
+  top:  0;
+}
+body {
+  background-color: #FAFAFA;
+}
+
+@media only screen and (max-width: 960px) {
+  .map-container {
+    display: none;
+  }
+  .card-img-top {
+    height: 200px;
+  }
+  .card-img-overlay .card-title, .card-img-overlay .card-text {
+    line-height: 30px;
+  }
+  .card-img-overlay .event-date {
+    top: 160px;
+  }
+}
