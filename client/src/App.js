@@ -12,7 +12,8 @@ class App extends Component {
       events: [],
       filter: {
         days: [],
-      }
+      },
+      showEvents: false,
     };
     this.addEventMarker = this.addEventMarker.bind(this);
     this.handleEventClick = this.handleEventClick.bind(this);
@@ -21,7 +22,7 @@ class App extends Component {
   componentDidMount() {
     this.getEvents()
       .then(res => this.setState({ all_events: res.result, events: res.result }))
-      .catch(err => console.log(err));
+      .catch(err => console.error(err));
   }
 
   getEvents = async () => {
@@ -54,15 +55,17 @@ class App extends Component {
   }
 
   render() {
+    let showEvents = this.state.showEvents;
     return (
       <div className="App row">
-        <div className="col-lg-8">
-          <div className="map-container">
+        <button className="btn btn-primary btn-events" onClick={() => this.setState({ showEvents: !this.state.showEvents }) }>Toggle Events</button>
+        <div className={ showEvents ? "col-lg-9" : "col-lg-12" }>
+          <div className="map-container" style={{width: showEvents ? '75%' : '100%'}}>
             <Map 
               ref="map" />
           </div>
         </div>
-        <div className="col-lg-1">
+{/*        <div className="col-lg-1">
           <div className="form-check" onClick={this.filter.bind(this)}>
             <input className="form-check-input" type="checkbox" value="1" id="filter-mon" />
             <label className="form-check-label" htmlFor="filter-mon">Monday</label>
@@ -91,22 +94,17 @@ class App extends Component {
             <input className="form-check-input" type="checkbox" value="0" id="filter-sun" />
             <label className="form-check-label" htmlFor="filter-sun">Sunday</label>
           </div>
-        </div>
-        <div className="col-lg-3">
-          <div className="cards-container">
-            {this.state.events.map(event => {
-              let date_parts = event.event_date.split("-");
-              let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substr(0,2));
-              if (this.state.filter.days.indexOf(""+date.getDay()) > -1) {
-                return (<Event 
-                  event={event} 
-                  onClick={this.handleEventClick} 
-                  addEventToMap={this.addEventMarker}
-                  removeEventFromMap={this.removeEventMarker}
-                  key={event.id}/>)
-              } else {
-                return false;
-              }
+        </div>*/}
+        <div className="col-lg-3" style={{display: showEvents ? "block" : "none" }}>
+          <div className=" cards-container">
+            {this.state.events.map((event, i) => {
+              if (i > 100) return false;
+              return (<Event 
+                event={event} 
+                onClick={this.handleEventClick} 
+                addEventToMap={this.addEventMarker}
+                removeEventFromMap={this.removeEventMarker}
+                key={event.id}/>)
             })}
           </div>
         </div>

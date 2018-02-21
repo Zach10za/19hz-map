@@ -9,26 +9,53 @@ class Marker extends Component {
     this.state = {
       events: props.events,
       infowindow: false,
+      opacity: 0
     }
   }
 
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({opacity: 1});
+    }, 250);
+  }
+
+  componentWillUnmount() {
+    this.setState({opacity: 0});
+  }
+
   openInfoWindow(a,b,c) {
-    this.setState({ infowindow: true });
+    // this.setState({ infowindow: true });
   }
 
   closeInfoWindow(e) {
     e.stopPropagation();
-    this.setState({ infowindow: false });
+    // this.setState({ infowindow: false });
   }
 
   render() {
-    let size_multiplier = this.props.$hover ? 16 : 8;
+    let num_events = this.props.events.length;
+    let styles = {
+      height: num_events > 1 ? '30px' : '20px', 
+      width: num_events > 1 ? '30px' : '20px', 
+      lineHeight: num_events > 1 ? '30px' : '20px',
+      backgroundColor: num_events > 1 ? '#2D7FE8' : '#00A6FF',
+      opacity: this.state.opacity,
+      zIndex: num_events
+    }
+    let hoverStyles = {
+      height: num_events > 1 ? '40px' : '30px', 
+      width: num_events > 1 ? '40px' : '30px', 
+      lineHeight: num_events > 1 ? '40px' : '30px',
+      backgroundColor: '#E85829',
+      opacity: this.state.opacity,
+      zIndex: 999
+    }
     return (
       <div 
         className="map-marker"
         onClick={this.openInfoWindow.bind(this)}
-        style={{height: size_multiplier + (this.props.events.length / 2) + 'px', width: size_multiplier + (this.props.events.length / 2) + 'px', zIndex: this.props.events.length}}>
-        
+        style={this.props.$hover ? hoverStyles : styles}>
+          {num_events > 1 ? num_events : ''}
         <ul 
           className="infowindow list-group" 
           onClick={this.closeInfoWindow.bind(this)}

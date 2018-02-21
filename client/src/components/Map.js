@@ -8,34 +8,73 @@ class Map extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      center: { lat: 34.0522, lng: -118.2437 },
-      zoom: 10,
+      // center: { lat: 34.0522, lng: -118.2437 },
+      // zoom: 10,
       apiKey: 'AIzaSyDgTT27dxGtMUKso84YXTvAV48x9923pO8',
       markers: [],
+      clusters: [],
+      window: {
+        center: { lat: 34.0522, lng: -118.2437 },
+        zoom: 10,
+        bounds: {},  
+      }
     };
+    this.calculateClusters = this.calculateClusters.bind(this);
   }
 
   componentDidMount() {
-
   }
 
   addMarker(marker) {
+    if (marker.lat && marker.lng) {
+      let markers = this.state.markers
+      let new_marker = {
+        events: [marker.event],
+        lat: parseFloat(marker.lat),
+        lng: parseFloat(marker.lng),
+        text: marker.text,
+      };
+      markers.push(new_marker);
+      this.setState({ markers });
+    }
+    this.calculateClusters(this.state.window.zoom);
+  }
+
+  calculateClusters(zoom) {
     let markers = this.state.markers;
-    let new_marker = {
-      events: [marker.event],
-      lat: marker.lat,
-      lng: marker.lng,
-      text: marker.text,
-    };
+    let clusters = [];
+
+    let distance_map = [1,1,1,1,1,1,1,1,0.5,0.3,0.1,0.05,0.008,0.0001,0.00001,0.000005,0.000001,0,0,0,0,0,0,0];
+    let distance = distance_map[zoom];
+    console.log(zoom, distance);
+
     for (let i=0; i < markers.length; i++) {
-      if (marker.lat === markers[i].lat && marker.lng === markers[i].lng) {
-        new_marker.events.push(...markers[i].events);
-        markers.splice(i, 1);
-        break;
+      let new_cluster = {};
+      new_cluster.events = markers[i].events;
+      new_cluster.lat = markers[i].lat;
+      new_cluster.lng = markers[i].lng;
+
+      for (let j=0; j < clusters.length; j++) {
+        if (Math.abs(clusters[j].lat - new_cluster.lat) < distance + (clusters[j].events.length * 0.001) && Math.abs(clusters[j].lng - new_cluster.lng) < distance + (clusters[j].events.length * 0.001)) {
+          new_cluster.events = [...new_cluster.events, ...clusters[j].events];
+          let sum_lat = 0;
+          let sum_lng = 0;
+          for (let x=0; x < clusters[j].events.length; x++) {
+            sum_lat += parseFloat(clusters[j].events[x].venue.location.lat);
+            sum_lng += parseFloat(clusters[j].events[x].venue.location.lng);
+          }
+          new_cluster.lat = sum_lat / clusters[j].events.length;
+          new_cluster.lng = sum_lng / clusters[j].events.length;
+
+          clusters.splice(j, 1);
+          break;
+        }
       }
-    } 
-    markers.push(new_marker);
-    this.setState({ markers });
+      clusters.push(new_cluster);
+
+    }
+
+    this.setState({ clusters: clusters });
   }
 
   setMarkers(markers) {
@@ -65,34 +104,62 @@ class Map extends Component {
   }
 
   showMarker(center) {
-    this.setState({
+    if (this.state.window.zoom !== 13) {
+      this.calculateClusters(13);
+    }
+    let w = {
+      center: { lat:parseFloat(center.lat), lng: parseFloat(center.lng)},
       zoom: 13,
-      center: {
-        lat: parseFloat(center.lat),
-        lng: parseFloat(center.lng),
-      },
-    });
+      bounds: this.state.window.bounds
+    };
+    this.setState({ window: w });
+  }
+
+  handleChange(change) {
+    if (this.state.window.zoom !== change.zoom) {
+      this.calculateClusters(change.zoom);
+    }
+    let w = {
+      center: change.center,
+      zoom: change.zoom,
+      bounds: change.bounds
+    };
+    this.setState({ window: w });
+  }
+
+  handleZoomAnimationStart(e) {
+    console.log(e);
+  }
+
+  handleZoomAnimationEnd(e) {
+    console.log(e);
   }
 
 
   render() {
+    let bounds = this.state.window.bounds;
+    let count = 0;
     return (
       <GoogleMapReact
         bootstrapURLKeys={{key: this.state.apiKey}} 
-        zoom={this.state.zoom}
-        center={this.state.center}
+        zoom={this.state.window.zoom}
+        center={this.state.window.center}
+        resetBoundsOnResize={true}
+        onChange={this.handleChange.bind(this)}
+        onZoomAnimationStart={this.handleZoomAnimationStart.bind(this)}
+        onZoomAnimationEnd={this.handleZoomAnimationEnd.bind(this)}
         onChildClick={(i, marker) => this.showMarker({lat: marker.lat, lng: marker.lng})}>
 
-        {this.state.markers.map((marker, i) => {
-          return (
-            <Marker
-              lat={marker.lat} 
-              lng={marker.lng} 
-              text={marker.text}
-              events={marker.events}
-              key={i} />
-              );
+        {this.state.clusters.map((cluster, i) => {
+          if (cluster.lat > bounds.ne.lat || cluster.lat < bounds.se.lat || cluster.lng > bounds.ne.lng || cluster.lng < bounds.nw.lng) {
+            return false;
+          } else {
+            count++;
+            return (<Marker lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
+          }
         })}
+        {console.log(count)}
+
       </GoogleMapReact>
     );
   }

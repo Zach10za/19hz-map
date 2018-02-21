@@ -25,7 +25,12 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
+.btn-events {
+  z-index: 999;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+}
 .row {
   margin: 0;
 }
@@ -34,10 +39,11 @@
 }
 .map-container {
   position: fixed;
+  z-index: 2;
   top: 0;
   left: 0;
   height: 100vh;
-  width: 66vw;
+  transition: 0.3s;
 }
 #map {
   height: 100vh;
@@ -45,6 +51,9 @@
 }
 .cards-container {
   padding-top: 30px;
+  padding-left: 10px;
+  transition: 0.3s;
+  z-index: 1;
 }
 .card {
   border: none;
@@ -93,7 +102,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  font-size: 10px;
+  font-size: 12px;
   text-align: center;
   transform: translateY(-50%) translateX(-50%);
 }
