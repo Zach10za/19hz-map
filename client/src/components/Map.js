@@ -46,7 +46,6 @@ class Map extends Component {
 
     let distance_map = [1,1,1,1,1,1,1,1,0.5,0.3,0.1,0.05,0.008,0.0001,0.00001,0.000005,0.000001,0,0,0,0,0,0,0];
     let distance = distance_map[zoom];
-    console.log(zoom, distance);
 
     for (let i=0; i < markers.length; i++) {
       let new_cluster = {};
@@ -84,23 +83,16 @@ class Map extends Component {
   }
 
   removeMarker(marker) {
+    console.log('removing marker');
     let markers = this.state.markers;
     for (let i=0; i < markers.length; i++) {
       if (marker.lat === markers[i].lat && marker.lng === markers[i].lng) {
-        if (markers[i].events.length > 1) {
-          for (let j=0; j < markers[i].events.length; j++) {
-            if (markers[i].events[j].id === marker.event.id) {
-              markers[i].events.splice(j, 1);
-              break;
-            }
-          }
-        } else {
-          markers.splice(i, 1);
-        }
+        markers.splice(i, 1);
         break;
       }
-    } 
+    }
     this.setState({ markers });
+    this.calculateClusters(this.state.window.zoom);
   }
 
   showMarker(center) {
@@ -116,9 +108,6 @@ class Map extends Component {
   }
 
   handleChange(change) {
-    if (this.state.window.zoom !== change.zoom) {
-      this.calculateClusters(change.zoom);
-    }
     let w = {
       center: change.center,
       zoom: change.zoom,
@@ -128,17 +117,16 @@ class Map extends Component {
   }
 
   handleZoomAnimationStart(e) {
-    console.log(e);
+    this.setState({ clusters: [] });
   }
 
   handleZoomAnimationEnd(e) {
-    console.log(e);
+      this.calculateClusters(this.state.window.zoom);
   }
 
 
   render() {
     let bounds = this.state.window.bounds;
-    let count = 0;
     return (
       <GoogleMapReact
         bootstrapURLKeys={{key: this.state.apiKey}} 
@@ -154,11 +142,9 @@ class Map extends Component {
           if (cluster.lat > bounds.ne.lat || cluster.lat < bounds.se.lat || cluster.lng > bounds.ne.lng || cluster.lng < bounds.nw.lng) {
             return false;
           } else {
-            count++;
             return (<Marker lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
           }
         })}
-        {console.log(count)}
 
       </GoogleMapReact>
     );

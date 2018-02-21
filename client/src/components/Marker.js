@@ -16,7 +16,7 @@ class Marker extends Component {
   componentDidMount() {
     setTimeout(() => {
       this.setState({opacity: 1});
-    }, 250);
+    }, 100);
   }
 
   componentWillUnmount() {

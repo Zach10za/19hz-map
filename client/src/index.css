@@ -3,3 +3,83 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+
+.page-cover {
+	z-index: 9999;
+	background: rgba(0,0,0,0.6);
+	height: 100vh;
+	width: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	text-align: center;
+}
+
+#bars {
+    height: 50px;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-90%);
+    width: 72px;
+}
+
+
+#bars h6::before {
+	content: 'loading';
+	color: #FFF;
+	text-align: center;
+	position: absolute;
+	top: 60px;
+	margin: 0 auto;
+	left: 0;
+	right: 0;
+    animation-name: loading;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+}
+
+.bar {
+   background: #FFF;
+    bottom: 1px;
+    height: 10px;
+    position: absolute;
+    width: 6px;      
+    animation: sound 0ms -800ms linear infinite alternate;
+}
+
+@keyframes sound {
+    0% {
+       opacity: .35;
+        height: 3px; 
+    }
+    100% {
+        opacity: 1;       
+        height: 28px;        
+    }
+}
+
+@keyframes loading {
+    0% {
+        opacity: 0.4; 
+    }
+    50% {
+        opacity: 1;         
+    }
+    100% {
+        opacity: 0.4;         
+    }
+}
+
+.bar:nth-child(1)  { left: 1px; animation-duration: 474ms; }
+.bar:nth-child(2)  { left: 8px; animation-duration: 433ms; }
+.bar:nth-child(3)  { left: 15px; animation-duration: 407ms; }
+.bar:nth-child(4)  { left: 22px; animation-duration: 458ms; }
+.bar:nth-child(5)  { left: 29px; animation-duration: 400ms; }
+.bar:nth-child(6)  { left: 36px; animation-duration: 427ms; }
+.bar:nth-child(7)  { left: 43px; animation-duration: 441ms; }
+.bar:nth-child(8)  { left: 50px; animation-duration: 419ms; }
+.bar:nth-child(9)  { left: 57px; animation-duration: 487ms; }
+.bar:nth-child(10) { left: 64px; animation-duration: 442ms; }
