@@ -2,7 +2,7 @@ var db = require('../db.js');
 
 exports.all = function() {
     return new Promise((resolve, reject) => {
-        db.get().query('SELECT * FROM events', function(err, result) {
+        db.get().query('SELECT * FROM events WHERE event_date >= CURDATE() ORDER BY event_date DESC', function(err, result) {
             if (err) return reject(err);
             return resolve({ success: true, count: result.length, result: result });
         });

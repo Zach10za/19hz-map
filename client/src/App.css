@@ -31,6 +31,9 @@
   top: 20px;
   left: 20px;
 }
+.App.row {
+  margin: 0;
+}
 .app-row {
   position: relative;
   margin: 0;
@@ -54,9 +57,6 @@
   position: fixed;
   width: 400px;
   height: 100vh;
-  padding-top: 20px;
-  padding-left: 20px;
-  padding-right: 20px;
   transition: 0.3s;
   right: 0;
   background: rgba(255,255,255,0.7);
@@ -64,6 +64,13 @@
   overflow-y: scroll;
   overflow-x: hidden;
 }
+.cards-container .list-group-item {
+  background: rgba(255,255,255,0.5);
+}
+.cards-container .list-group-item:hover {
+  background: rgba(255,255,255,1);
+}
+
 .card {
   border: none;
   border-radius: 2px;
@@ -96,14 +103,24 @@
   background: rgba(247, 120, 9, 0.9);
 }
 
+.tags {
+  margin-top: 6px;
+}
 .tag {
-  border-radius: 3px;
+  border-radius: 5px;
   margin: 2px;
   padding: 3px 8px;
   font-size: 12px;
   color: #FFF;
   display: inline-block;
 }
+.tag:first-of-type {
+  margin-left: 0;
+}
+.tag:last-of-type {
+  margin-right: 0;
+}
+
 
 .map-marker {
   opacity: 0;
@@ -116,6 +133,10 @@
   text-align: center;
   transform: translateY(-50%) translateX(-50%);
 }
+.user-marker {
+  background: purple;
+}
+
 .map-marker:hover {
   background: #f45342;
   width: 50px;
@@ -129,27 +150,36 @@
   background: #FFF;
   position: absolute;
   top:  0;
+  transform: translateY(-100%) translateX(-50%);
+  text-align: left;
+  line-height: 16px;
 }
 
 .filter-container {
   height: 100px;
-  background: green;
   width: 100%;
   position: fixed;
   transition: 0.3s;
   bottom: 0;
   background: rgba(255,255,255,0.7);
   z-index: 9;
+  padding: 30px;
 }
 
-.filter-days-btns {
-  padding: 20px;
+#filters .filter-days-btns {
+  /*padding: 20px;*/
 }
-.filter-days-btns .btn.active {
-  background-color: #f45342;
+#filters .filter-days-btns .btn {
+  margin: 0 5px;
 }
-.filter-days-btns .btn:hover {
+#filters .filter-days-btns .btn.active {
+  background-color: #2D7FE8;
+}
+#filters .filter-days-btns .btn:hover {
   background-color: #41bef4;
+}
+#filters .filter-days-btns .btn.active:hover {
+  background-color: #f45342;
 }
 
 

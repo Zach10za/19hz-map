@@ -24,12 +24,12 @@ class Marker extends Component {
   }
 
   openInfoWindow(a,b,c) {
-    // this.setState({ infowindow: true });
+    this.setState({ infowindow: true });
   }
 
   closeInfoWindow(e) {
     e.stopPropagation();
-    // this.setState({ infowindow: false });
+    this.setState({ infowindow: false });
   }
 
   render() {
@@ -38,7 +38,7 @@ class Marker extends Component {
       height: num_events > 1 ? '30px' : '20px', 
       width: num_events > 1 ? '30px' : '20px', 
       lineHeight: num_events > 1 ? '30px' : '20px',
-      backgroundColor: num_events > 1 ? '#2D7FE8' : '#00A6FF',
+      backgroundColor: num_events > 1 ? '#2D7FE8' : num_events < 1 ? 'purple' : '#00A6FF',
       opacity: this.state.opacity,
       zIndex: num_events
     }
@@ -52,19 +52,32 @@ class Marker extends Component {
     }
     return (
       <div 
-        className="map-marker"
+        className={this.props.text === "Current_Position" ? "user-marker map-marker" : "map-marker"}
         onClick={this.openInfoWindow.bind(this)}
         style={this.props.$hover ? hoverStyles : styles}>
           {num_events > 1 ? num_events : ''}
-        <ul 
+{/*        <ul 
           className="infowindow list-group" 
           onClick={this.closeInfoWindow.bind(this)}
           style={{ display: this.state.infowindow ? 'block' : 'none' }}>
-          <h4 className="list-group-item">{this.state.events[0].venue.name}</h4>
           {this.state.events.map((event, i) => {
             return (<li className="list-group-item" key={i}>{event.title}</li>);
           })}
-        </ul>
+        </ul>*/}
+
+        <div className="infowindow list-group" onClick={this.closeInfoWindow.bind(this)} style={{ display: this.state.infowindow ? 'block' : 'none' }} >
+          {this.state.events.map((event, i) => {
+            return (
+              <a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>
+                <h5 className="mb-1">{event.title}</h5>
+                <p className="mb-1">{event.venue.name}</p>
+                <div className="d-flex w-100 justify-content-between">
+                  <small>{event.time}</small>
+                  <small>{event.date}</small>
+                </div>
+              </a>)
+          })}
+        </div>
 
       </div>
     );

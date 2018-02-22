@@ -29,13 +29,6 @@ class Event extends Component {
 
   componentDidMount() {
 
-    this.props.addEventToMap({
-      event: this.state,
-      lat: this.state.venue.location.lat,
-      lng: this.state.venue.location.lng,
-      text: this.state.title,
-    });
-
     this.getOrganizers()
       .then(res => this.setState({ organizers: res.result }))
       .catch(err => console.log(err));
@@ -43,14 +36,6 @@ class Event extends Component {
     this.getTags()
       .then(res => this.setState({ tags: res.result }))
       .catch(err => console.log(err));
-  }
-
-  componentWillUnmount() {
-    this.props.removeEventFromMap({
-      event: this.state,
-      lat: this.state.venue.location.lat,
-      lng: this.state.venue.location.lng,
-    });
   }
 
   getTags = async () => {

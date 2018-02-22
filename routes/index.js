@@ -12,7 +12,7 @@ router.get('/api/test', function(req, res, next) {
     res.send({route: '/api/test', location: 'root'});
 });
 
-router.get('/scrape', EventController.scrapeEvents);
+router.get('/api/scrape', EventController.scrapeEvents);
 
 
 router.get('/events', EventController.index);

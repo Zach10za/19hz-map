@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import GoogleMapReact from 'google-map-react';
+import {latLng2Tile} from 'google-map-react/utils';
 import Marker from './Marker.js';
 import '../App.css';
 
@@ -10,98 +11,99 @@ class Map extends Component {
     this.state = {
       // center: { lat: 34.0522, lng: -118.2437 },
       // zoom: 10,
+      events: [],
       apiKey: 'AIzaSyDgTT27dxGtMUKso84YXTvAV48x9923pO8',
       markers: [],
       clusters: [],
+      currentLocation: null,
       window: {
         center: { lat: 34.0522, lng: -118.2437 },
         zoom: 10,
         bounds: {},  
-      }
+      },
+      shouldUpdate: true,
     };
     this.calculateClusters = this.calculateClusters.bind(this);
   }
 
   componentDidMount() {
-  }
-
-  addMarker(marker) {
-    if (marker.lat && marker.lng) {
-      let markers = this.state.markers
-      let new_marker = {
-        events: [marker.event],
-        lat: parseFloat(marker.lat),
-        lng: parseFloat(marker.lng),
-        text: marker.text,
-      };
-      markers.push(new_marker);
-      this.setState({ markers });
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        let currentLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        }
+        // console.log(latLng2Tile(currentLocation, this.state.window.zoom));
+        this.setState({currentLocation});
+      });
     }
     this.calculateClusters(this.state.window.zoom);
   }
 
-  calculateClusters(zoom) {
-    let markers = this.state.markers;
+  getCurrentLocation() {
+    return this.state.currentLocation;
+  }
+
+  calculateClusters(zoom = this.state.window.zoom) {
+    let events = this.state.events;
     let clusters = [];
 
-    let distance_map = [1,1,1,1,1,1,1,1,0.5,0.3,0.1,0.05,0.008,0.0001,0.00001,0.000005,0.000001,0,0,0,0,0,0,0];
+    let distance_map = [1,1,1,1,1,1,1,1,0.5,0.3,0.15,0.05,0.02,0.008,0.004,0.001,0.0000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001];
     let distance = distance_map[zoom];
 
-    for (let i=0; i < markers.length; i++) {
+    // console.log(zoom, distance);
+
+    for (let i=0; i < events.length; i++) {
+
+      if (!events[i].venue.location.lat || !events[i].venue.location.lng) break;
+
       let new_cluster = {};
-      new_cluster.events = markers[i].events;
-      new_cluster.lat = markers[i].lat;
-      new_cluster.lng = markers[i].lng;
+      new_cluster.events = [events[i]];
+      new_cluster.lat = events[i].venue.location.lat;
+      new_cluster.lng = events[i].venue.location.lng;
+
+      let closest = {index: -1, distance: 999};
 
       for (let j=0; j < clusters.length; j++) {
-        if (Math.abs(clusters[j].lat - new_cluster.lat) < distance + (clusters[j].events.length * 0.001) && Math.abs(clusters[j].lng - new_cluster.lng) < distance + (clusters[j].events.length * 0.001)) {
-          new_cluster.events = [...new_cluster.events, ...clusters[j].events];
-          let sum_lat = 0;
-          let sum_lng = 0;
-          for (let x=0; x < clusters[j].events.length; x++) {
-            sum_lat += parseFloat(clusters[j].events[x].venue.location.lat);
-            sum_lng += parseFloat(clusters[j].events[x].venue.location.lng);
-          }
-          new_cluster.lat = sum_lat / clusters[j].events.length;
-          new_cluster.lng = sum_lng / clusters[j].events.length;
+        let lat_distance = Math.abs(clusters[j].lat - new_cluster.lat);
+        let lng_distance = Math.abs(clusters[j].lng - new_cluster.lng);
 
-          clusters.splice(j, 1);
-          break;
+        if (lat_distance < distance && lng_distance < distance) {
+          if (lat_distance + lng_distance < closest.distance ) {
+            closest.index = j;
+            closest.distance = lat_distance + lng_distance;
+          }
         }
       }
+      if (closest.index > -1) {
+        new_cluster.events = [...new_cluster.events, ...clusters[closest.index].events];
+        let sum_lat = 0;
+        let sum_lng = 0;
+        for (let x=0; x < clusters[closest.index].events.length; x++) {
+          sum_lat += parseFloat(clusters[closest.index].events[x].venue.location.lat);
+          sum_lng += parseFloat(clusters[closest.index].events[x].venue.location.lng);
+        }
+        new_cluster.lat = sum_lat / clusters[closest.index].events.length;
+        new_cluster.lng = sum_lng / clusters[closest.index].events.length;
+
+        clusters.splice(closest.index, 1);
+      }
+
       clusters.push(new_cluster);
 
     }
 
-    this.setState({ clusters: clusters });
+    this.setState({ clusters: clusters, shouldUpdate: true });
   }
 
-  setMarkers(markers) {
-    for (let i=0; i < markers.length; i++) {
-      this.addMarker(markers[i]);
-    }
-  }
-
-  removeMarker(marker) {
-    console.log('removing marker');
-    let markers = this.state.markers;
-    for (let i=0; i < markers.length; i++) {
-      if (marker.lat === markers[i].lat && marker.lng === markers[i].lng) {
-        markers.splice(i, 1);
-        break;
-      }
-    }
-    this.setState({ markers });
-    this.calculateClusters(this.state.window.zoom);
+  setMarkers(events) {
+    this.setState({ events, shouldUpdate: false }, this.calculateClusters);
   }
 
   showMarker(center) {
-    if (this.state.window.zoom !== 13) {
-      this.calculateClusters(13);
-    }
     let w = {
       center: { lat:parseFloat(center.lat), lng: parseFloat(center.lng)},
-      zoom: 13,
+      zoom: this.state.window.zoom,
       bounds: this.state.window.bounds
     };
     this.setState({ window: w });
@@ -113,38 +115,64 @@ class Map extends Component {
       zoom: change.zoom,
       bounds: change.bounds
     };
-    this.setState({ window: w });
+    this.setState({ window: w, shouldUpdate: this.state.window.zoom === change.zoom });
+
   }
 
   handleZoomAnimationStart(e) {
+    try {
     this.setState({ clusters: [] });
+  } catch(err) {
+    alert(err);
+  }
   }
 
   handleZoomAnimationEnd(e) {
       this.calculateClusters(this.state.window.zoom);
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    return nextState.shouldUpdate;
+  }
+
+  customMapsAPICode(e) {
+    let map = e.map;
+    let maps = e.maps;
+    var circle = new maps.Circle({
+      center: this.state.currentLocation,
+      map: map,
+      radius: 1609.3 * this.props.getFilterRadius(),    // 10 miles in metres
+      fillColor: 'rgba(200,0,0,0.5)',
+      strokeColor: 'rgba(200,0,0,0.8)',
+      strokeWeight: 1
+    });
+  }
 
   render() {
     let bounds = this.state.window.bounds;
+    let count = 0;
     return (
       <GoogleMapReact
         bootstrapURLKeys={{key: this.state.apiKey}} 
-        zoom={this.state.window.zoom}
+        zoom={this.state.window.zoom || 10}
         center={this.state.window.center}
         resetBoundsOnResize={true}
         onChange={this.handleChange.bind(this)}
         onZoomAnimationStart={this.handleZoomAnimationStart.bind(this)}
         onZoomAnimationEnd={this.handleZoomAnimationEnd.bind(this)}
-        onChildClick={(i, marker) => this.showMarker({lat: marker.lat, lng: marker.lng})}>
-
+        onChildClick={(i, marker) => this.showMarker({lat: marker.lat, lng: marker.lng})}
+        onGoogleApiLoaded={this.customMapsAPICode.bind(this)}
+        yesIWantToUseGoogleMapApiInternals={true} >
+        {this.state.currentLocation && (<Marker lat={this.state.currentLocation.lat}  lng={this.state.currentLocation.lng} text="Current_Position" events={[]} />)}
         {this.state.clusters.map((cluster, i) => {
           if (cluster.lat > bounds.ne.lat || cluster.lat < bounds.se.lat || cluster.lng > bounds.ne.lng || cluster.lng < bounds.nw.lng) {
             return false;
           } else {
+            count++;
             return (<Marker lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
           }
         })}
+        {/*{console.log(count + " markers rendered")}*/}
 
       </GoogleMapReact>
     );
