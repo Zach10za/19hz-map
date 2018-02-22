@@ -240,8 +240,8 @@ class App extends Component {
                 })}
               </div>
             </div>
-            
-            <div className="col-md-1">
+
+            <div className="col-md-2">
               <div className="input-group mb-3">
                 <input type="text" className="form-control" onChange={(e) => this.setState({ filter: {days: this.state.filter.days, radius: e.target.value} }, this.filter)} disabled={false} value={this.state.filter.radius} aria-label="Radius" aria-describedby="radius-input" />
                 <div className="input-group-append">
@@ -254,7 +254,7 @@ class App extends Component {
           </div>
         </div>
         <div className="map-container">
-          <Map 
+          <Map
             ref="map"
             getFilterRadius={() => this.state.filter.radius}
             pageCover={(pageCover) => this.setState({pageCover})} />
