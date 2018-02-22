@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import GoogleMapReact from 'google-map-react';
-import {latLng2Tile} from 'google-map-react/utils';
+// import {latLng2Tile} from 'google-map-react/utils';
 import Marker from './Marker.js';
 import '../App.css';
 
@@ -24,6 +24,7 @@ class Map extends Component {
       shouldUpdate: true,
     };
     this.calculateClusters = this.calculateClusters.bind(this);
+    this.updateCircleRadius = this.updateCircleRadius.bind(this);
   }
 
   componentDidMount() {
@@ -120,11 +121,7 @@ class Map extends Component {
   }
 
   handleZoomAnimationStart(e) {
-    try {
     this.setState({ clusters: [] });
-  } catch(err) {
-    alert(err);
-  }
   }
 
   handleZoomAnimationEnd(e) {
@@ -135,10 +132,16 @@ class Map extends Component {
     return nextState.shouldUpdate;
   }
 
+  updateCircleRadius(radius) {
+    let circle = this.state.circle;
+    circle.setRadius(1609.3 * radius);
+    this.setState({ circle });
+  }
+
   customMapsAPICode(e) {
     let map = e.map;
     let maps = e.maps;
-    var circle = new maps.Circle({
+    let circle = new maps.Circle({
       center: this.state.currentLocation,
       map: map,
       radius: 1609.3 * this.props.getFilterRadius(),    // 10 miles in metres
@@ -146,11 +149,11 @@ class Map extends Component {
       strokeColor: 'rgba(200,0,0,0.8)',
       strokeWeight: 1
     });
+    this.setState({ circle });
   }
 
   render() {
     let bounds = this.state.window.bounds;
-    let count = 0;
     return (
       <GoogleMapReact
         bootstrapURLKeys={{key: this.state.apiKey}} 
@@ -168,11 +171,9 @@ class Map extends Component {
           if (cluster.lat > bounds.ne.lat || cluster.lat < bounds.se.lat || cluster.lng > bounds.ne.lng || cluster.lng < bounds.nw.lng) {
             return false;
           } else {
-            count++;
             return (<Marker lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
           }
         })}
-        {/*{console.log(count + " markers rendered")}*/}
 
       </GoogleMapReact>
     );

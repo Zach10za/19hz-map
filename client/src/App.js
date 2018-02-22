@@ -77,6 +77,7 @@ class App extends Component {
   }
 
   getEvents = async () => {
+    console.log('getting events');
     let t0 = performance.now();
     const response = await fetch('/api/events/');
     const body = await response.json();
@@ -86,12 +87,14 @@ class App extends Component {
   };
 
   getTags = async (id) => {
+    console.log('getting tags');
     const response = await fetch(`/api/events/${id}/tags`);
     const body = await response.json();
     return body;
   };
 
   getOrganizers = async (id) => {
+    console.log('getting organizers');
     const response = await fetch(`/api/events/${id}/organizers`);
     const body = await response.json();
     return body;
@@ -162,6 +165,7 @@ class App extends Component {
         }
       }
       console.log("found " + events.length + " events within " + radius_filter + " miles of your position");
+      this.refs.map.updateCircleRadius(radius_filter);
     }
     return events;
   }
@@ -262,7 +266,8 @@ class App extends Component {
       </div>
     );
   }
-    getTagColor(id) {
+
+  getTagColor(id) {
     const COLORS = [
       '#f44336',
       '#E91E63',
