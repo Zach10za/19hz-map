@@ -145,8 +145,8 @@ class Map extends Component {
       center: this.state.currentLocation,
       map: map,
       radius: 1609.3 * this.props.getFilterRadius(),    // 10 miles in metres
-      fillColor: 'rgba(200,0,0,0.5)',
-      strokeColor: 'rgba(200,0,0,0.8)',
+      fillColor: 'rgba(0,100,200,0.3)',
+      strokeColor: 'rgba(0,100,200,0.5)',
       strokeWeight: 1
     });
     this.setState({ circle });

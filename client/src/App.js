@@ -87,14 +87,12 @@ class App extends Component {
   };
 
   getTags = async (id) => {
-    console.log('getting tags');
     const response = await fetch(`/api/events/${id}/tags`);
     const body = await response.json();
     return body;
   };
 
   getOrganizers = async (id) => {
-    console.log('getting organizers');
     const response = await fetch(`/api/events/${id}/organizers`);
     const body = await response.json();
     return body;
