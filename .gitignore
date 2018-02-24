@@ -3,3 +3,4 @@ node_modules
 client/node_modules
 
 db.js
+client/.env.development
