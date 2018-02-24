@@ -25,6 +25,11 @@ class Map extends Component {
     };
     this.calculateClusters = this.calculateClusters.bind(this);
     this.updateCircleRadius = this.updateCircleRadius.bind(this);
+    this.updateCircleCenter = this.updateCircleCenter.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleZoomAnimationStart = this.handleZoomAnimationStart.bind(this);
+    this.handleZoomAnimationEnd =this.handleZoomAnimationEnd.bind(this);
+    this.customMapsAPICode =this.customMapsAPICode.bind(this);
   }
 
   componentDidMount() {
@@ -34,15 +39,17 @@ class Map extends Component {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         }
-        // console.log(latLng2Tile(currentLocation, this.state.window.zoom));
         this.setState({currentLocation});
+        if (this.state.circle) {
+          this.updateCircleCenter(currentLocation);
+        }
       });
     }
-    this.calculateClusters(this.state.window.zoom);
+    // this.calculateClusters(this.state.window.zoom);
   }
 
   getCurrentLocation() {
-    return this.state.currentLocation;
+    return this.state.currentLocation || this.state.window.center;
   }
 
   calculateClusters(zoom = this.state.window.zoom) {
@@ -102,21 +109,21 @@ class Map extends Component {
   }
 
   showMarker(center) {
-    let w = {
+    let window = {
       center: { lat:parseFloat(center.lat), lng: parseFloat(center.lng)},
       zoom: this.state.window.zoom,
       bounds: this.state.window.bounds
     };
-    this.setState({ window: w });
+    this.setState({ window });
   }
 
   handleChange(change) {
-    let w = {
+    let window = {
       center: change.center,
       zoom: change.zoom,
       bounds: change.bounds
     };
-    this.setState({ window: w, shouldUpdate: this.state.window.zoom === change.zoom });
+    this.setState({ window, shouldUpdate: this.state.window.zoom === change.zoom });
 
   }
 
@@ -138,11 +145,18 @@ class Map extends Component {
     this.setState({ circle });
   }
 
+  updateCircleCenter(center) {
+    let circle = this.state.circle;
+    circle.setCenter(center);
+    this.setState({ circle });
+  }
+
   customMapsAPICode(e) {
     let map = e.map;
     let maps = e.maps;
+    console.log('drawing circle');
     let circle = new maps.Circle({
-      center: this.state.currentLocation,
+      center: this.state.currentLocation || this.state.window.center,
       map: map,
       radius: 1609.3 * this.props.getFilterRadius(),    // 10 miles in metres
       fillColor: 'rgba(0,100,200,0.3)',
@@ -160,13 +174,12 @@ class Map extends Component {
         zoom={this.state.window.zoom || 10}
         center={this.state.window.center}
         resetBoundsOnResize={true}
-        onChange={this.handleChange.bind(this)}
-        onZoomAnimationStart={this.handleZoomAnimationStart.bind(this)}
-        onZoomAnimationEnd={this.handleZoomAnimationEnd.bind(this)}
+        onChange={this.handleChange}
+        onZoomAnimationStart={this.handleZoomAnimationStart}
+        onZoomAnimationEnd={this.handleZoomAnimationEnd}
         onChildClick={(i, marker) => this.showMarker({lat: marker.lat, lng: marker.lng})}
-        onGoogleApiLoaded={this.customMapsAPICode.bind(this)}
+        onGoogleApiLoaded={this.customMapsAPICode}
         yesIWantToUseGoogleMapApiInternals={true} >
-        {this.state.currentLocation && (<Marker lat={this.state.currentLocation.lat}  lng={this.state.currentLocation.lng} text="Current_Position" events={[]} />)}
         {this.state.clusters.map((cluster, i) => {
           if (cluster.lat > bounds.ne.lat || cluster.lat < bounds.se.lat || cluster.lng > bounds.ne.lng || cluster.lng < bounds.nw.lng) {
             return false;
@@ -174,6 +187,7 @@ class Map extends Component {
             return (<Marker lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
           }
         })}
+        {this.state.currentLocation && (<Marker lat={this.state.currentLocation.lat}  lng={this.state.currentLocation.lng} text="Current_Position" size="5px" events={[]} />)}
 
       </GoogleMapReact>
     );

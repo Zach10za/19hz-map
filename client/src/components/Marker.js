@@ -11,12 +11,14 @@ class Marker extends Component {
       infowindow: false,
       opacity: 0
     }
+    this.closeInfoWindow = this.closeInfoWindow.bind(this);
+    this.openInfoWindow = this.openInfoWindow.bind(this);
   }
 
   componentDidMount() {
-    setTimeout(() => {
-      this.setState({opacity: 1});
-    }, 100);
+    // setTimeout(() => {
+    this.setState({opacity: 1});
+    // }, 100);
   }
 
   componentWillUnmount() {
@@ -35,8 +37,8 @@ class Marker extends Component {
   render() {
     let num_events = this.props.events.length;
     let styles = {
-      height: num_events > 1 ? '30px' : '20px', 
-      width: num_events > 1 ? '30px' : '20px', 
+      height: this.props.size ? this.props.size : (num_events > 1 ? '30px' : '20px'), 
+      width: this.props.size ? this.props.size : (num_events > 1 ? '30px' : '20px'), 
       lineHeight: num_events > 1 ? '30px' : '20px',
       backgroundColor: num_events > 1 ? '#2D7FE8' : num_events < 1 ? 'purple' : '#00A6FF',
       opacity: this.state.opacity,
@@ -53,19 +55,10 @@ class Marker extends Component {
     return (
       <div 
         className={this.props.text === "Current_Position" ? "user-marker map-marker" : "map-marker"}
-        onClick={this.openInfoWindow.bind(this)}
+        onClick={this.openInfoWindow}
         style={this.props.$hover ? hoverStyles : styles}>
-          {num_events > 1 ? num_events : ''}
-{/*        <ul 
-          className="infowindow list-group" 
-          onClick={this.closeInfoWindow.bind(this)}
-          style={{ display: this.state.infowindow ? 'block' : 'none' }}>
-          {this.state.events.map((event, i) => {
-            return (<li className="list-group-item" key={i}>{event.title}</li>);
-          })}
-        </ul>*/}
-
-        <div className="infowindow list-group" onClick={this.closeInfoWindow.bind(this)} style={{ display: this.state.infowindow ? 'block' : 'none' }} >
+        {num_events > 1 ? num_events : ''}
+        <div className="infowindow list-group" onClick={this.closeInfoWindow} style={{ display: this.state.infowindow ? 'block' : 'none' }} >
           {this.state.events.map((event, i) => {
             return (
               <a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>

@@ -1,36 +1,43 @@
 .App {
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+
+.events-progress {
+  border-radius: 0;
+  height: 2px;
+  background-color: transparent;
+}
+.events-progress .progress-bar {
+  background-color: #FFF;
 }
 
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
-}
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
-  font-size: large;
-}
-
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 .control-btns {
   z-index: 999;
   position: fixed;
   top: 20px;
   left: 20px;
 }
+.events-counter {
+  z-index: 999;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0,0,0,0.6);
+  color: #FFF;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 20px;
+  padding: 10px;
+  border-radius: .25rem;
+}
+.btn-scrape-events {
+  z-index: 999;
+  bottom: 20px;
+  left: 20px;
+  position: absolute;
+  opacity: 0.05;
+}
+
 .App.row {
   margin: 0;
 }
@@ -54,17 +61,66 @@
   height: 100vh;
   width: 100%;
 }
-.cards-container {
+.settings-container {
   position: fixed;
-  width: 400px;
+  width: 100%;
+  max-width: 500px;
   height: 100vh;
   transition: 0.3s;
   right: 0;
-  background: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.8);
   z-index: 9;
-  overflow-y: scroll;
-  overflow-x: hidden;
+  padding: 20px;
 }
+.settings-container.hide {
+  right: -500px;
+}
+
+
+.settings-container.hide .btn-settings {
+  position: absolute;
+  width: 100px;
+  top: 20px;
+  left: -120px;
+  transition: 0.3s;
+}
+.settings-container .btn-settings {
+  content: 'Hide Settings';
+  transition: 0.3s;
+  z-index: 999;
+  position: absolute;
+  width: 150px;
+  top: 20px;
+  left: 330px;
+}
+#settings .days-btns {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+}
+#settings .days-btns .btn {
+  width: 13%;
+  margin: auto;
+  border-color: transparent;
+}
+#settings .days-btns .btn.active {
+  background-color: #2D7FE8;
+}
+#settings .days-btns .btn:hover {
+  background-color: #41bef4;
+}
+#settings .days-btns .btn.active:hover {
+  background-color: #f45342;
+}
+.settings-btns {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: none;
+}
+
+
+
 .cards-container .list-group-item {
   background: rgba(255,255,255,0.5);
 }
@@ -136,6 +192,8 @@
 }
 .user-marker {
   background: purple;
+  width: 5px;
+  height: 5px;
 }
 
 .map-marker:hover {
@@ -156,7 +214,7 @@
   line-height: 16px;
 }
 
-.filter-container {
+.1settings-container {
   height: 100px;
   width: 100%;
   position: fixed;
@@ -165,40 +223,31 @@
   background: rgba(255,255,255,0.7);
   z-index: 9;
   padding: 30px;
+
 }
 
-#filters .filter-days-btns {
-  /*padding: 20px;*/
+#1settings .filter-days-btns {
+  display: inline-flex;
 }
-#filters .filter-days-btns .btn {
+#1settings .filter-days-btns .btn {
   margin: 0 5px;
 }
-#filters .filter-days-btns .btn.active {
+#se1ttings .filter-days-btns .btn.active {
   background-color: #2D7FE8;
 }
-#filters .filter-days-btns .btn:hover {
+#se1ttings .filter-days-btns .btn:hover {
   background-color: #41bef4;
 }
-#filters .filter-days-btns .btn.active:hover {
+#se1ttings .filter-days-btns .btn.active:hover {
   background-color: #f45342;
 }
-
 
 body {
   background-color: #FAFAFA;
 }
 
 @media only screen and (max-width: 960px) {
-  .map-container {
-    display: none;
-  }
-  .card-img-top {
-    height: 200px;
-  }
-  .card-img-overlay .card-title, .card-img-overlay .card-text {
-    line-height: 30px;
-  }
-  .card-img-overlay .event-date {
-    top: 160px;
+  .cards-container {
+    width: 100%;
   }
 }
