@@ -9,18 +9,27 @@ class App extends Component {
     this.state = {
       all_events: [],
       events: [],
-      filter: {
+      newEventsCount: 0,
+      settings: {
+        dateRange: {
+          min: '',
+          max: '',
+        },
         days: [0,1,2,3,4,5,6],
         radius: 50,
       },
-      showEvents: false,
-      showFilters: false,
+      showSettings: false,
       pageCover: false,
+      pageCoverInfo: {
+        message: 'loading',
+        eventsLoaded: null,
+        eventsToLoad: null,
+      },
       error: {
         isError: false,
         message: '',
       },
-      loadingMessages: [],
+      loadingMessage: 'loading',
       shouldUpdate: true,
     };
     this.handleEventClick = this.handleEventClick.bind(this);
@@ -30,14 +39,26 @@ class App extends Component {
     this.changeDayFilter = this.changeDayFilter.bind(this);
   }
 
-  componentDidMount() {
-    this.setState({ pageCover: true });
-    this.getEvents()
-      .then(res => {
-        let events = [];
-        for (let i=0; i < res.result.length; i++) {
-          let event = res.result[i];
-          if (event.venue.lat && event.venue.lng) {
+  componentDidMount = async () => {
+    try {
+      let tzoffset = (new Date()).getTimezoneOffset() * 60000;
+      let date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
+      this.setState({ pageCover: true, settings: { ...this.state.settings, dateRange: { min: date, max: '' }}, shouldUpdate: true });
+      let res = await this.getEvents();
+      let events = [];
+
+      for (let i=0; i < res.result.length; i++) {
+        let pageCoverInfo = {
+          message: `${i}/${res.result.length}`,
+          eventsLoaded: i,
+          eventsToLoad: res.result.length,
+        }
+        this.setState({ pageCoverInfo });
+
+        let event = res.result[i];
+
+        if (!(event.organizers || event.tags)) {
+          if(event.venue.lat && event.venue.lng) {
             let ev = {
               id: event.id,
               title: event.title,
@@ -59,21 +80,31 @@ class App extends Component {
               tags: []
             };
 
-            this.getOrganizers(ev.id)
-              .then(res => ev.organizers = res.result )
-              .catch(err => console.log(err));
+            let organizers_res = await this.getOrganizers(ev.id);
+            ev.organizers = organizers_res.result;
 
-            this.getTags(ev.id)
-              .then(res => ev.tags= res.result )
-              .catch(err => console.log(err));
+            let tags_res = await this.getTags(ev.id);
+            ev.tags = tags_res.result;
 
             events.push(ev);
           }
+        } else {
+          events.push(event);
         }
-        this.setState({ all_events: events, events: events }, this.filter)
-      })
-      .then(() => this.setState({ pageCover: false }))
-      .catch(err => this.setState({error: {isError: true, message: err}}));
+      }
+      await this.setState({ all_events: events, events: events });
+      await this.filter();
+      let pageCoverInfo = {
+        message: '',
+        eventsLoaded: null,
+        eventsToLoad: null,
+      }
+      await this.setState({ pageCover: false, pageCoverInfo });
+
+    } catch(err) {
+      console.log("APP_DID_MOUNT ERROR: ", err);
+    }
+    // window.addEventListener('beforeunload', localStorage.setItem("state", JSON.stringify(this.state)));
   }
 
   getEvents = async () => {
@@ -99,9 +130,13 @@ class App extends Component {
   };
 
   scrapeEvents = async () => {
-    const response = await fetch(`/api/scrape`);
-    const body = await response.json();
-    return body;
+    if (prompt("Enter secret to continue.") === '19hz') {
+      const response = await fetch(`/api/scrape`);
+      const body = await response.json();
+      return body;
+    } else {
+      alert("Access denied");
+    }
   };
 
 
@@ -110,7 +145,7 @@ class App extends Component {
   }
 
   changeDayFilter(day_of_week) {
-    let days_filter = this.state.filter.days;
+    let days_filter = this.state.settings.days;
     let value = parseInt(day_of_week, 10);
 
     if (days_filter.indexOf(value) > -1) {
@@ -118,18 +153,41 @@ class App extends Component {
     } else {
       days_filter.push(value);
     }
-    this.setState({ filter: {days: days_filter, radius: this.state.filter.radius}, shouldUpdate: false }, this.filter);
+    this.setState({ settings: { ...this.state.settings, days: days_filter }, shouldUpdate: false }, this.filter);
   }
 
-  filter() {
-    let events = this.filterDays();
-    events = this.filterRadius(events);
-    this.refs.map.setMarkers(events);
-    this.setState({ events, shouldUpdate: true });
+  filter = async () => {
+    try {
+      console.log("filter");
+      let events = await this.filterDateRange();
+      events = await this.filterDays(events);
+      events = await this.filterRadius(events);
+      await this.refs.map.setMarkers(events);
+      await this.setState({ events, shouldUpdate: true  });
+    } catch(err) {
+      console.log("FILTER ERROR: ", err);
+    }
+  }
+
+  filterDateRange(all_events = null) {
+    let date_range_filter = this.state.settings.dateRange;
+    all_events = all_events || this.state.all_events;
+    let events = [];
+
+    for (let i=0; i < all_events.length; i++) {
+      let event_date = new Date(all_events[i].date);
+      let min_date = date_range_filter.min ? new Date(date_range_filter.min) : new Date();
+      let max_date = date_range_filter.max ? new Date(date_range_filter.max) : null;
+      if (event_date >= min_date && (event_date <= max_date || !max_date) ) {
+        events.push(all_events[i]);
+      }
+    }
+    console.log(events.length + " events in the date range");
+    return events;
   }
 
   filterDays(all_events = null) {
-    let days_filter = this.state.filter.days;
+    let days_filter = this.state.settings.days;
     all_events = all_events || this.state.all_events;
     let events = [];
 
@@ -145,26 +203,21 @@ class App extends Component {
         }
       }
     }
-    console.log("found " + events.length + " events based on the selected days");
     return events;
   }
 
   filterRadius(all_events = null) {
-    let currentLocation = this.refs.map.getCurrentLocation();
-    let radius_filter = this.state.filter.radius;
-    console.log(radius_filter);
+    let location = this.refs.map.getCurrentLocation();
+    let radius_filter = this.state.settings.radius;
     all_events = all_events || this.state.all_events;
     let events = [];
-    if (currentLocation) {
-      for (let i=0; i < all_events.length; i++) {
-        let distance = this.getDistanceBetweenPoints(currentLocation, all_events[i].venue.location);
-        if (distance <= radius_filter) {
-          events.push(all_events[i]);
-        }
+    for (let i=0; i < all_events.length; i++) {
+      let distance = this.getDistanceBetweenPoints(location, all_events[i].venue.location);
+      if (distance <= radius_filter) {
+        events.push(all_events[i]);
       }
-      console.log("found " + events.length + " events within " + radius_filter + " miles of your position");
-      this.refs.map.updateCircleRadius(radius_filter);
     }
+    this.refs.map.updateCircleRadius(radius_filter);
     return events;
   }
 
@@ -187,78 +240,129 @@ class App extends Component {
     return R * C;
   }
 
+  handleDateRangeChange(e) {
+    let settings = this.state.settings;
+    if (e.target.id === 'min-date') {
+      settings.dateRange.min = e.target.value;
+    } else if (e.target.id === 'max-date') {
+      settings.dateRange.max = e.target.value;
+    }
+    this.setState({ settings }, this.filter);
+  }
+
   shouldComponentUpdate(nextProps, nextState) {
     return nextState.shouldUpdate;
   }
 
   render() {
-    let showEvents = this.state.showEvents;
-    let showFilters = this.state.showFilters;
     let loading_bars = [];
     for (let i=0; i < 10; i++) {
       loading_bars.push(<div className="bar" key={i}></div>);
     }
-    let filter = this.state.filter;
+    let settings = this.state.settings;
     let changeDayFilter = this.changeDayFilter;
+
     return (
       <div className="App row app-row">
         <div className="page-cover" style={{display: this.state.pageCover ? 'block' : 'none'}} >
-          <div id="bars">{loading_bars}<h6>&nbsp;</h6></div>
+          <div id="bars">{loading_bars}<h6>{this.state.pageCoverInfo.message}</h6></div>
+          <div className="progress events-progress">
+            <div className="progress-bar" role="progressbar" style={{ width: (this.state.pageCoverInfo.eventsLoaded / this.state.pageCoverInfo.eventsToLoad * 100) + "%"}} aria-valuenow={this.state.pageCoverInfo.eventsLoaded} aria-valuemin="0" aria-valuemax={this.state.pageCoverInfo.eventsToLoad}></div>
+          </div>
         </div>
-        <div className="control-btns">
-          <button className="btn btn-primary btn-block" data-toggle="button" aria-pressed={this.state.showEvents} onClick={() => this.setState({ showEvents: !this.state.showEvents }) }>Toggle Events</button>
-          <button className="btn btn-success btn-block" data-toggle="button" aria-pressed={this.state.showFilters} onClick={() => this.setState({ showFilters: !this.state.showFilters }) }>Toggle Filters</button>
-          <button className="btn btn-danger btn-block" disabled onClick={this.scrapeEvents}>Scrape Events</button>
-        </div>
-        <div className="cards-container list-group" style={{ right: showEvents ? 0 : '-400px' }}>
-          {this.state.events.map((event, i) => {
-            return (
-              <a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>
-                <h5 className="mb-1">{event.title}</h5>
-                <p className="mb-1">{event.venue.name}</p>
-                <div className="d-flex w-100 justify-content-between">
-                  <small>{event.time}</small>
-                  <small>{event.date}</small>
-                </div>
-                <div className="tags">
-                  {event.tags.map((tag, j) => {
-                    return (<div className="tag" key={j} style={{background: this.getTagColor(tag.id)}}>{tag.tag}</div>)
-                  })}
-                </div>
-              </a>)
-          })}
-        </div>
-        <div id="filters" className="filter-container" style={{ bottom: showFilters ? 0 : '-100px', width: showEvents ? 'calc(100% - 400px)' : '100%' }}>
-          <div className="row">
+        <div className="events-counter">{this.state.events.length} Events</div>
+          {/*<button className="btn btn-primary btn-block" data-toggle="button" aria-pressed={this.state.showSettings} onClick={() => this.setState({ showSettings: !this.state.showSettings }) }>Toggle Settings</button>*/}
+          <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
 
-            <div className="col-md-4">
-              <div className="filter-days-btns">
+        <div id="settings" className={"settings-container" + (this.state.showSettings ? "" : " hide")}>
+          <button className="btn btn-primary btn-settings" 
+            data-toggle="button" 
+            aria-pressed={this.state.showSettings} 
+            onClick={(e) => this.setState({ showSettings: !this.state.showSettings }) }>{ this.state.showSettings ? 'Hide Settings' : 'Settings'}</button>
+
+          <div className="row mb-5">
+            <div className="col-md-12">
+              <h1 className="display-4">Settings</h1>
+            </div>
+          </div>
+
+          <div className="row mb-5">
+            <div className="col-md-12">
+              <h4>Date Range</h4>
+
+              <div className="form-row">
+                <div className="col">
+                  <input type="date" className="form-control" id="min-date" value={this.state.settings.dateRange.min} onChange={this.handleDateRangeChange.bind(this)}/>
+                </div>
+                <div className="col">
+                  <input type="date" className="form-control" id="max-date" value={this.state.settings.dateRange.max} onChange={this.handleDateRangeChange.bind(this)}/>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div className="row mb-5">
+            <div className="col-md-12">
+              <h4>Days of the Week</h4>
+              <div className="days-btns">
                 {['S','M','T','W','Th','F','S'].map((day, i) => {
                   return (
-                    <button className={filter.days.indexOf(i) > -1 ? 'btn btn-secondary active' : 'btn btn-secondary'} data-toggle="buttons" key={i} value={i} onClick={(e) => changeDayFilter(e.target.value)} aria-pressed={filter.days.indexOf(i) > -1} autoComplete="off">
+                    <button className={settings.days.indexOf(i) > -1 ? 'btn btn-secondary active' : 'btn btn-secondary'} data-toggle="buttons" key={i} value={i} onClick={(e) => changeDayFilter(e.target.value)} aria-pressed={settings.days.indexOf(i) > -1} autoComplete="off">
                       {day}
                     </button>
                   )
                 })}
               </div>
             </div>
+          </div>
 
-            <div className="col-md-2">
-              <div className="input-group mb-3">
-                <input type="text" className="form-control" onChange={(e) => this.setState({ filter: {days: this.state.filter.days, radius: e.target.value} }, this.filter)} disabled={false} value={this.state.filter.radius} aria-label="Radius" aria-describedby="radius-input" />
+          <div className="row mb-5">
+            <div className="col-md-12">
+              <h4>Location Radius</h4>
+              <small className="text-muted mb-1">({this.state.settings.radius} miles)</small>
+              <div className="input-group radius-range">
+                <input
+                  type="range" 
+                  className="form-control" 
+                  min="5"
+                  max="100"
+                  step="1"
+                  onChange={(e) => this.setState({ settings: { ...this.state.settings, radius: e.target.value} }, this.filter)} 
+                  disabled={false} 
+                  value={this.state.settings.radius} 
+                  aria-label="Radius" 
+                  aria-describedby="radius-input" />
+              </div>
+            </div>
+          </div>
+
+{/*          <div className="row mb-5">
+            <div className="col-md-12">
+              <h4>Location Radius</h4>
+              <div className="input-group radius-input">
+                <input type="text" className="form-control" onChange={(e) => this.setState({ settings: { ...this.state.settings, radius: e.target.value} }, this.filter)} disabled={false} value={this.state.settings.radius} aria-label="Radius" aria-describedby="radius-input" />
                 <div className="input-group-append">
                   <span className="input-group-text" id="radius-input"> miles</span>
                 </div>
               </div>
             </div>
+          </div>*/}
 
-
+          <div className="row mb-2 settings-btns">
+            <div className="col-md-12">
+              <button className="btn btn-primary btn-block btn-lg" onClick={() => alert('save')}>Save</button>
+              <button className="btn btn-link btn-block" onClick={() => alert('reset')}>Reset</button>
+            </div>
           </div>
+
         </div>
+
         <div className="map-container">
           <Map
             ref="map"
-            getFilterRadius={() => this.state.filter.radius}
+            getFilterRadius={() => this.state.settings.radius}
+            settings={this.settings}
             pageCover={(pageCover) => this.setState({pageCover})} />
         </div>
       </div>
