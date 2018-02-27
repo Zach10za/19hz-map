@@ -58,7 +58,26 @@ class Marker extends Component {
         onClick={this.openInfoWindow}
         style={this.props.$hover ? hoverStyles : styles}>
         {num_events > 1 ? num_events : ''}
-        <div className="infowindow list-group" onClick={this.closeInfoWindow} style={{ display: this.state.infowindow ? 'block' : 'none' }} >
+{/*        <div className="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <button type="button" className="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                ...
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" className="btn btn-primary">Save changes</button>
+              </div>
+            </div>
+          </div>
+        </div>*/}
+                <div className="infowindow list-group" onClick={this.closeInfoWindow} style={{ display: this.state.infowindow ? 'block' : 'none' }} >
           {this.state.events.map((event, i) => {
             return (
               <a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>

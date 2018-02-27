@@ -9,7 +9,7 @@ class App extends Component {
     this.state = {
       all_events: [],
       events: [],
-      newEventsCount: 0,
+      newEvents: 0,
       settings: {
         dateRange: {
           min: '',
@@ -39,13 +39,36 @@ class App extends Component {
     this.changeDayFilter = this.changeDayFilter.bind(this);
   }
 
+  componentWillMount() {
+    let cached_state = localStorage.getItem('state');
+    if (cached_state) {
+      cached_state = JSON.parse(cached_state);
+      console.log("Found cached state", cached_state);
+      this.setState(cached_state);
+    } else {
+      console.log("Could not find cached state");
+    }
+
+  }
+
   componentDidMount = async () => {
+    function removeDuplicatesBy(keyFn, array) {
+      console.log("removeDuplicatesBy");
+      let mySet = new Set();
+      return array.filter((x) => {
+        let key = keyFn(x), isNew = !mySet.has(key);
+        if (isNew) mySet.add(key);
+        return isNew;
+      });
+    }
+
     try {
       let tzoffset = (new Date()).getTimezoneOffset() * 60000;
       let date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
       this.setState({ pageCover: true, settings: { ...this.state.settings, dateRange: { min: date, max: '' }}, shouldUpdate: true });
       let res = await this.getEvents();
       let events = [];
+
 
       for (let i=0; i < res.result.length; i++) {
         let pageCoverInfo = {
@@ -56,43 +79,61 @@ class App extends Component {
         this.setState({ pageCoverInfo });
 
         let event = res.result[i];
-
-        if (!(event.organizers || event.tags)) {
-          if(event.venue.lat && event.venue.lng) {
-            let ev = {
-              id: event.id,
-              title: event.title,
-              date: event.event_date,
-              time: event.time,
-              price: event.price,
-              age: event.age,
-              venue: {
-                name: event.venue.name,
-                address: event.venue.address,
-                place_id: event.venue.place_id,
-                image: event.venue.image,
-                location: {
-                  lat: event.venue.lat,
-                  lng: event.venue.lng,
-                }
-              },
-              organizers: [],
-              tags: []
-            };
-
-            let organizers_res = await this.getOrganizers(ev.id);
-            ev.organizers = organizers_res.result;
-
-            let tags_res = await this.getTags(ev.id);
-            ev.tags = tags_res.result;
-
-            events.push(ev);
-          }
-        } else {
-          events.push(event);
+        if(event.venue.lat && event.venue.lng) {
+          let ev = {
+            id: event.id,
+            title: event.title,
+            date: event.event_date,
+            time: event.time,
+            price: event.price,
+            age: event.age,
+            venue: {
+              name: event.venue.name,
+              address: event.venue.address,
+              place_id: event.venue.place_id,
+              image: event.venue.image,
+              location: {
+                lat: event.venue.lat,
+                lng: event.venue.lng,
+              }
+            },
+            organizers: [],
+            tags: []
+          };
+          events.push(ev);
         }
       }
-      await this.setState({ all_events: events, events: events });
+
+      let deduped_events = removeDuplicatesBy(x => x.id, [...this.state.all_events, ...events]);
+
+      let new_events_count = 0;
+      for (let i=0; i < deduped_events.length; i++) {
+        let pageCoverInfo = {
+          message: `Getting new event info`,
+          eventsLoaded: i,
+          eventsToLoad: deduped_events.length,
+        }
+        this.setState({ pageCoverInfo });
+        if (deduped_events[i].organizers.length < 1 && deduped_events[i].tags.length < 1) {
+          new_events_count++;
+
+          pageCoverInfo = {
+            message: `Getting new event info`,
+            eventsLoaded: i,
+            eventsToLoad: deduped_events.length,
+          }
+          this.setState({ pageCoverInfo });
+
+          let organizers_res = await this.getOrganizers(deduped_events[i].id);
+          deduped_events[i].organizers = organizers_res.result;
+
+          let tags_res = await this.getTags(deduped_events[i].id);
+          deduped_events[i].tags = tags_res.result;
+        }
+      }
+      this.setState({ newEventsCount: new_events_count });
+
+      await this.setState({ all_events: deduped_events, events: deduped_events });
       await this.filter();
       let pageCoverInfo = {
         message: '',
@@ -104,11 +145,17 @@ class App extends Component {
     } catch(err) {
       console.log("APP_DID_MOUNT ERROR: ", err);
     }
-    // window.addEventListener('beforeunload', localStorage.setItem("state", JSON.stringify(this.state)));
+    window.addEventListener('beforeunload', localStorage.setItem("state", JSON.stringify(this.state)));
   }
 
   getEvents = async () => {
     console.log('getting events');
+    let pageCoverInfo = {
+      message: `Fetching events from database`,
+      eventsLoaded: null,
+      eventsToLoad: null,
+    }
+    this.setState({ pageCoverInfo });
     let t0 = performance.now();
     const response = await fetch('/api/events/');
     const body = await response.json();
@@ -270,15 +317,19 @@ class App extends Component {
             <div className="progress-bar" role="progressbar" style={{ width: (this.state.pageCoverInfo.eventsLoaded / this.state.pageCoverInfo.eventsToLoad * 100) + "%"}} aria-valuenow={this.state.pageCoverInfo.eventsLoaded} aria-valuemin="0" aria-valuemax={this.state.pageCoverInfo.eventsToLoad}></div>
           </div>
         </div>
-        <div className="events-counter">{this.state.events.length} Events</div>
-          {/*<button className="btn btn-primary btn-block" data-toggle="button" aria-pressed={this.state.showSettings} onClick={() => this.setState({ showSettings: !this.state.showSettings }) }>Toggle Settings</button>*/}
-          <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
+        <div className="events-counter">
+          {this.state.events.length} Events 
+          <span className="ml-1 badge badge-info" style={{display: (this.state.newEventsCount > 0 && this.state.newEventsCount < this.all_events.length) ? 'inline' : 'none'}}>
+            {this.state.newEventsCount}
+          </span>
+        </div>
+        <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
 
         <div id="settings" className={"settings-container" + (this.state.showSettings ? "" : " hide")}>
           <button className="btn btn-primary btn-settings" 
             data-toggle="button" 
             aria-pressed={this.state.showSettings} 
-            onClick={(e) => this.setState({ showSettings: !this.state.showSettings }) }>{ this.state.showSettings ? 'Hide Settings' : 'Settings'}</button>
+            onClick={(e) => this.setState({ showSettings: !this.state.showSettings }) }>{ this.state.showSettings ? 'Hide' : 'Settings'}</button>
 
           <div className="row mb-5">
             <div className="col-md-12">
@@ -290,7 +341,7 @@ class App extends Component {
             <div className="col-md-12">
               <h4>Date Range</h4>
 
-              <div className="form-row">
+              <div v="form-row">
                 <div className="col">
                   <input type="date" className="form-control" id="min-date" value={this.state.settings.dateRange.min} onChange={this.handleDateRangeChange.bind(this)}/>
                 </div>

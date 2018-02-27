@@ -64,7 +64,7 @@
 .settings-container {
   position: fixed;
   width: 100%;
-  max-width: 500px;
+  max-width: 400px;
   height: 100vh;
   transition: 0.3s;
   right: 0;
@@ -73,7 +73,7 @@
   padding: 20px;
 }
 .settings-container.hide {
-  right: -500px;
+  right: -400px;
 }
 
 
@@ -85,13 +85,13 @@
   transition: 0.3s;
 }
 .settings-container .btn-settings {
-  content: 'Hide Settings';
+  content: 'Hide';
   transition: 0.3s;
   z-index: 999;
   position: absolute;
-  width: 150px;
+  width: 80px;
   top: 20px;
-  left: 330px;
+  left: 300px;
 }
 #settings .days-btns {
   display: inline-flex;
