@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 // import Event from './components/Event.js';
 import Map from './components/Map.js';
+import MarkerModal from './components/MarkerModal.js';
 
 class App extends Component {
 
@@ -9,7 +10,8 @@ class App extends Component {
     this.state = {
       all_events: [],
       events: [],
-      newEvents: 0,
+      modalEvents: [],
+      newEventsCount: 0,
       settings: {
         dateRange: {
           min: '',
@@ -297,6 +299,10 @@ class App extends Component {
     this.setState({ settings }, this.filter);
   }
 
+  openMarkerModal(events) {
+    this.setState({ modalEvents: events });
+  }
+
   shouldComponentUpdate(nextProps, nextState) {
     return nextState.shouldUpdate;
   }
@@ -317,6 +323,7 @@ class App extends Component {
             <div className="progress-bar" role="progressbar" style={{ width: (this.state.pageCoverInfo.eventsLoaded / this.state.pageCoverInfo.eventsToLoad * 100) + "%"}} aria-valuenow={this.state.pageCoverInfo.eventsLoaded} aria-valuemin="0" aria-valuemax={this.state.pageCoverInfo.eventsToLoad}></div>
           </div>
         </div>
+
         <div className="events-counter">
           {this.state.events.length} Events 
           <span className="ml-1 badge badge-info" style={{display: (this.state.newEventsCount > 0 && this.state.newEventsCount < this.all_events.length) ? 'inline' : 'none'}}>
@@ -414,7 +421,8 @@ class App extends Component {
             ref="map"
             getFilterRadius={() => this.state.settings.radius}
             settings={this.settings}
-            pageCover={(pageCover) => this.setState({pageCover})} />
+            pageCover={(pageCover) => this.setState({pageCover})}
+            openMarkerModal={this.openMarkerModal.bind(this)} />
         </div>
       </div>
     );

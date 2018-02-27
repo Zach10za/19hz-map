@@ -8,11 +8,8 @@ class Marker extends Component {
     this.props = props;
     this.state = {
       events: props.events,
-      infowindow: false,
       opacity: 0
     }
-    this.closeInfoWindow = this.closeInfoWindow.bind(this);
-    this.openInfoWindow = this.openInfoWindow.bind(this);
   }
 
   componentDidMount() {
@@ -23,15 +20,6 @@ class Marker extends Component {
 
   componentWillUnmount() {
     this.setState({opacity: 0});
-  }
-
-  openInfoWindow(a,b,c) {
-    this.setState({ infowindow: true });
-  }
-
-  closeInfoWindow(e) {
-    e.stopPropagation();
-    this.setState({ infowindow: false });
   }
 
   render() {
@@ -55,41 +43,11 @@ class Marker extends Component {
     return (
       <div 
         className={this.props.text === "Current_Position" ? "user-marker map-marker" : "map-marker"}
-        onClick={this.openInfoWindow}
-        style={this.props.$hover ? hoverStyles : styles}>
+        onClick={() => this.props.onMarkerClick(this.props.events)}
+        style={this.props.$hover ? hoverStyles : styles}
+        data-toggle="modal" data-target="#eventsModal">
+
         {num_events > 1 ? num_events : ''}
-{/*        <div className="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-          <div className="modal-dialog modal-dialog-centered" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title" id="exampleModalLongTitle">Modal title</h5>
-                <button type="button" className="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div className="modal-body">
-                ...
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" className="btn btn-primary">Save changes</button>
-              </div>
-            </div>
-          </div>
-        </div>*/}
-                <div className="infowindow list-group" onClick={this.closeInfoWindow} style={{ display: this.state.infowindow ? 'block' : 'none' }} >
-          {this.state.events.map((event, i) => {
-            return (
-              <a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>
-                <h5 className="mb-1">{event.title}</h5>
-                <p className="mb-1">{event.venue.name}</p>
-                <div className="d-flex w-100 justify-content-between">
-                  <small>{event.time}</small>
-                  <small>{event.date}</small>
-                </div>
-              </a>)
-          })}
-        </div>
 
       </div>
     );
