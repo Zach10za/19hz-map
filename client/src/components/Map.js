@@ -30,6 +30,7 @@ class Map extends Component {
     this.handleZoomAnimationStart = this.handleZoomAnimationStart.bind(this);
     this.handleZoomAnimationEnd =this.handleZoomAnimationEnd.bind(this);
     this.customMapsAPICode =this.customMapsAPICode.bind(this);
+    this.openMarkerModal = this.openMarkerModal.bind(this);
   }
 
   componentDidMount() {
@@ -151,10 +152,13 @@ class Map extends Component {
     this.setState({ circle });
   }
 
+  openMarkerModal(events) {
+    this.props.openMarkerModal(events);
+  }
+
   customMapsAPICode(e) {
     let map = e.map;
     let maps = e.maps;
-    console.log('drawing circle');
     let circle = new maps.Circle({
       center: this.state.currentLocation || this.state.window.center,
       map: map,
@@ -168,6 +172,7 @@ class Map extends Component {
 
   render() {
     let bounds = this.state.window.bounds;
+    let openMarkerModal = this.openMarkerModal;
     return (
       <GoogleMapReact
         bootstrapURLKeys={{key: this.state.apiKey}} 
@@ -179,15 +184,17 @@ class Map extends Component {
         onZoomAnimationEnd={this.handleZoomAnimationEnd}
         onChildClick={(i, marker) => this.showMarker({lat: marker.lat, lng: marker.lng})}
         onGoogleApiLoaded={this.customMapsAPICode}
-        yesIWantToUseGoogleMapApiInternals={true} >
+        yesIWantToUseGoogleMapApiInternals={true}>
+
         {this.state.clusters.map((cluster, i) => {
           if (cluster.lat > bounds.ne.lat || cluster.lat < bounds.se.lat || cluster.lng > bounds.ne.lng || cluster.lng < bounds.nw.lng) {
             return false;
           } else {
-            return (<Marker lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
+            return (<Marker onMarkerClick={openMarkerModal} lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
           }
         })}
         {this.state.currentLocation && (<Marker lat={this.state.currentLocation.lat}  lng={this.state.currentLocation.lng} text="Current_Position" size="5px" events={[]} />)}
+
 
       </GoogleMapReact>
     );

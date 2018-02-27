@@ -50,7 +50,6 @@
 }
 .map-container {
   position: fixed;
-  z-index: 1;
   top: 0;
   left: 0;
   width: 100%;
@@ -119,6 +118,27 @@
   display: none;
 }
 
+.modal {
+  z-index: 10;
+}
+.modal-backdrop {
+  z-index: 9;
+}
+
+#eventsModal .modal-body {
+  max-height: 400px;
+  overflow-y: scroll;
+}
+
+.venue-events-list {
+  height: auto;
+  transition: 0.2s;
+}
+
+.venue-events-list.collapsed {
+  height: 0;
+  overflow: hidden;
+}
 
 
 .cards-container .list-group-item {
