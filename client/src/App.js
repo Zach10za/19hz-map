@@ -325,17 +325,17 @@ class App extends Component {
         </div>
 
         <div className="events-counter">
-          {this.state.events.length} Events 
-          <span className="ml-1 badge badge-info" style={{display: (this.state.newEventsCount > 0 && this.state.newEventsCount < this.all_events.length) ? 'inline' : 'none'}}>
+          {this.state.events.length} Events
+          <span className="ml-1 badge badge-info" style={{display: (this.state.newEventsCount > 0 && this.state.newEventsCount < this.state.all_events.length) ? 'inline' : 'none'}}>
             {this.state.newEventsCount}
           </span>
         </div>
         <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
 
         <div id="settings" className={"settings-container" + (this.state.showSettings ? "" : " hide")}>
-          <button className="btn btn-primary btn-settings" 
-            data-toggle="button" 
-            aria-pressed={this.state.showSettings} 
+          <button className="btn btn-primary btn-settings"
+            data-toggle="button"
+            aria-pressed={this.state.showSettings}
             onClick={(e) => this.setState({ showSettings: !this.state.showSettings }) }>{ this.state.showSettings ? 'Hide' : 'Settings'}</button>
 
           <div className="row mb-5">
@@ -381,15 +381,15 @@ class App extends Component {
               <small className="text-muted mb-1">({this.state.settings.radius} miles)</small>
               <div className="input-group radius-range">
                 <input
-                  type="range" 
-                  className="form-control" 
+                  type="range"
+                  className="form-control"
                   min="5"
                   max="100"
                   step="1"
-                  onChange={(e) => this.setState({ settings: { ...this.state.settings, radius: e.target.value} }, this.filter)} 
-                  disabled={false} 
-                  value={this.state.settings.radius} 
-                  aria-label="Radius" 
+                  onChange={(e) => this.setState({ settings: { ...this.state.settings, radius: e.target.value} }, this.filter)}
+                  disabled={false}
+                  value={this.state.settings.radius}
+                  aria-label="Radius"
                   aria-describedby="radius-input" />
               </div>
             </div>
