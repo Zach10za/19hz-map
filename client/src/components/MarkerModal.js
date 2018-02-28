@@ -34,14 +34,15 @@ class MarkerModal extends Component {
     return venues;
   }
 
-  handleVenueClick(venue) {
-    console.log(venue.target);
-    
+  handleVenueClick(e) {
+    let venueList = e.target.parentNode.getElementsByClassName('venue-events-list')[0];
+    venueList.classList.toggle('collapsed');
   }
 
   render() {
     // console.log(this.props.events);
     let events = [];
+    let handleVenueClick = this.handleVenueClick;
     if (this.state.modalGroupBy === 'events') {
       events = this.props.events.map((event, i) => {
         return (
@@ -57,7 +58,7 @@ class MarkerModal extends Component {
     } else if (this.state.modalGroupBy === 'venues') {
       events = this.sortByVenue(this.props.events).map((venue, i) => {
         return (
-          <div className="list-group-item list-group-item-action flex-column align-items-start" onClick={this.handleVenueClick.bind(venue)} key={venue.id}>
+          <div className="list-group-item list-group-item-action flex-column align-items-start" onClick={(e) => handleVenueClick(e)} key={i}>
             <h5 className="mb-1">{venue.name}</h5>
             <div className="list-group venue-events-list collapsed">
               {venue.events.map((event, j) => {

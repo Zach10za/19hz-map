@@ -324,6 +324,8 @@ class App extends Component {
           </div>
         </div>
 
+        <MarkerModal events={this.state.modalEvents} />
+
         <div className="events-counter">
           {this.state.events.length} Events
           <span className="ml-1 badge badge-info" style={{display: (this.state.newEventsCount > 0 && this.state.newEventsCount < this.state.all_events.length) ? 'inline' : 'none'}}>
