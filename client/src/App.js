@@ -22,7 +22,6 @@ class App extends Component {
         radius: 50,
       },
       showSettings: false,
-      pageCover: false,
       pageCoverInfo: {
         message: 'loading',
         eventsLoaded: null,
@@ -48,7 +47,17 @@ class App extends Component {
     let cached_state = localStorage.getItem('state');
     if (cached_state) {
       cached_state = JSON.parse(cached_state);
-      this.setState(cached_state);
+
+      let tzoffset = (new Date()).getTimezoneOffset() * 60000;
+      let cur_date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
+
+      this.setState(cached_state, () => {
+        let all_events = this.state.all_events;
+        all_events = all_events.filter((event, i) => {
+          return event.date >= cur_date;
+        });
+        this.setState({ all_events, events: all_events });
+      });
     }
     this.setState({loading: true});
 
@@ -79,7 +88,8 @@ class App extends Component {
 
       let tzoffset = (new Date()).getTimezoneOffset() * 60000;
       let date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
-      this.setState({ pageCover: false, settings: { ...this.state.settings, dateRange: { min: date, max: '' }} });
+
+      this.setState({ settings: { ...this.state.settings, dateRange: { min: date, max: '' }} });
 
       let res = await this.getEvents();
       let events = [];
@@ -140,11 +150,11 @@ class App extends Component {
             }})
           }, this.state.loadingTimeout);
 
-          const organizers_res = await this.getOrganizers(deduped_events[i].id);
-          deduped_events[i].organizers = organizers_res.result;
+          // const organizers_res = await this.getOrganizers(deduped_events[i].id);
+          // deduped_events[i].organizers = organizers_res.result;
 
-          const tags_res = await this.getTags(deduped_events[i].id);
-          deduped_events[i].tags = tags_res.result;
+          // const tags_res = await this.getTags(deduped_events[i].id);
+          // deduped_events[i].tags = tags_res.result;
         }
       }
 
@@ -156,13 +166,13 @@ class App extends Component {
         }})
       }, this.state.loadingTimeout);
 
-      this.setState({ loading: false });
       this.setState({ newEventsCount: new_events_count, all_events: deduped_events, events: deduped_events }, this.filter);
-      this.setState({ pageCover: false });
+      this.setState({ loading: false });
 
     } catch(err) {
       console.log("APP_DID_MOUNT ERROR: ", err);
     }
+    
     window.addEventListener('beforeunload', localStorage.setItem("state", JSON.stringify(this.state)));
   }
 
@@ -211,14 +221,6 @@ class App extends Component {
       return err;
     }
   };
-
-  updateLoadingScreen = async (pageCoverInfo) => {
-    try {
-        this.setState({ pageCoverInfo });
-    } catch(err) {
-      return err;
-    }
-  }
 
   handleEventClick(marker) {
     this.refs.map.showMarker(marker);
@@ -288,15 +290,19 @@ class App extends Component {
     let location = this.refs.map.getCurrentLocation();
     let radius_filter = this.state.settings.radius;
     all_events = all_events || this.state.all_events;
-    let events = [];
-    for (let i=0; i < all_events.length; i++) {
-      let distance = this.getDistanceBetweenPoints(location, all_events[i].venue.location);
-      if (distance <= radius_filter) {
-        events.push(all_events[i]);
+    if (radius_filter > 0) {
+      let events = [];
+      for (let i=0; i < all_events.length; i++) {
+        let distance = this.getDistanceBetweenPoints(location, all_events[i].venue.location);
+        if (distance <= radius_filter) {
+          events.push(all_events[i]);
+        }
       }
+      this.refs.map.updateCircleRadius(radius_filter);
+      return events;
+    } else {
+      return all_events;
     }
-    this.refs.map.updateCircleRadius(radius_filter);
-    return events;
   }
 
   getDistanceBetweenPoints(p1, p2) {

@@ -16,6 +16,7 @@ class Map extends Component {
       markers: [],
       clusters: [],
       circle: null,
+      showCircle: false,
       currentLocation: null,
       window: {
         center: { lat: 34.0522, lng: -118.2437 },
