@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 // import Event from './components/Event.js';
 import Map from './components/Map.js';
 import MarkerModal from './components/MarkerModal.js';
+import LoadingScreen from './components/LoadingScreen.js';
 
 class App extends Component {
 
@@ -32,8 +33,10 @@ class App extends Component {
         message: '',
       },
       loadingMessage: 'loading',
-      shouldUpdate: true,
+      loading: true,
+      loadingTimeout: 10
     };
+    this.updateLoadingScreen = this.updateLoadingScreen.bind(this);
     this.handleEventClick = this.handleEventClick.bind(this);
     this.filter = this.filter.bind(this);
     this.filterDays = this.filterDays.bind(this);
@@ -45,47 +48,62 @@ class App extends Component {
     let cached_state = localStorage.getItem('state');
     if (cached_state) {
       cached_state = JSON.parse(cached_state);
-      console.log("Found cached state", cached_state);
       this.setState(cached_state);
-    } else {
-      console.log("Could not find cached state");
     }
+    this.setState({loading: true});
 
   }
 
   componentDidMount = async () => {
-    function removeDuplicatesBy(keyFn, array) {
-      console.log("removeDuplicatesBy");
-      let mySet = new Set();
-      return array.filter((x) => {
-        let key = keyFn(x), isNew = !mySet.has(key);
-        if (isNew) mySet.add(key);
-        return isNew;
-      });
+    const removeDuplicatesBy = async (keyFn, array) => {
+      try {
+        let mySet = new Set();
+        return array.filter((x) => {
+          let key = keyFn(x), isNew = !mySet.has(key);
+          if (isNew) mySet.add(key);
+          return isNew;
+        });
+      } catch (err) {
+        return err;
+      }
     }
 
     try {
+      setTimeout(() => {
+        this.setState({ pageCoverInfo: {
+          message: 'Fetching events',
+          eventsLoaded: 0,
+          eventsToLoad: 0,
+        }})
+      }, this.state.loadingTimeout);
+
       let tzoffset = (new Date()).getTimezoneOffset() * 60000;
       let date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
-      this.setState({ pageCover: true, settings: { ...this.state.settings, dateRange: { min: date, max: '' }}, shouldUpdate: true });
+      this.setState({ pageCover: false, settings: { ...this.state.settings, dateRange: { min: date, max: '' }} });
+
       let res = await this.getEvents();
       let events = [];
 
-
       for (let i=0; i < res.result.length; i++) {
-        let pageCoverInfo = {
-          message: `${i}/${res.result.length}`,
-          eventsLoaded: i,
-          eventsToLoad: res.result.length,
-        }
-        this.setState({ pageCoverInfo });
 
         let event = res.result[i];
         if(event.venue.lat && event.venue.lng) {
+      
+          setTimeout(() => {
+            this.setState({ pageCoverInfo: {
+              message: 'Getting stored events',
+              eventsLoaded: i,
+              eventsToLoad: res.result.length,
+            }})
+          }, this.state.loadingTimeout);
+
+          let date_parts = event.event_date.split('-');
+          let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
+
           let ev = {
             id: event.id,
             title: event.title,
-            date: event.event_date,
+            date: date,
             time: event.time,
             price: event.price,
             age: event.age,
@@ -106,43 +124,41 @@ class App extends Component {
         }
       }
 
-      let deduped_events = removeDuplicatesBy(x => x.id, [...this.state.all_events, ...events]);
+      const deduped_events = await removeDuplicatesBy(x => x.id, [...this.state.all_events, ...events]);
 
       let new_events_count = 0;
       for (let i=0; i < deduped_events.length; i++) {
-        let pageCoverInfo = {
-          message: `Getting new event info`,
-          eventsLoaded: i,
-          eventsToLoad: deduped_events.length,
-        }
-        this.setState({ pageCoverInfo });
-        if (deduped_events[i].organizers.length < 1 && deduped_events[i].tags.length < 1) {
+
+        if ((!deduped_events[i].organizers || !deduped_events[i].tags) || (deduped_events[i].organizers.length < 1 && deduped_events[i].tags.length < 1)) {
           new_events_count++;
 
-          pageCoverInfo = {
-            message: `Getting new event info`,
-            eventsLoaded: i,
-            eventsToLoad: deduped_events.length,
-          }
-          this.setState({ pageCoverInfo });
+          setTimeout(() => {
+            this.setState({ pageCoverInfo: {
+              message: 'Processing events',
+              eventsLoaded: i,
+              eventsToLoad: deduped_events.length,
+            }})
+          }, this.state.loadingTimeout);
 
-          let organizers_res = await this.getOrganizers(deduped_events[i].id);
+          const organizers_res = await this.getOrganizers(deduped_events[i].id);
           deduped_events[i].organizers = organizers_res.result;
 
-          let tags_res = await this.getTags(deduped_events[i].id);
+          const tags_res = await this.getTags(deduped_events[i].id);
           deduped_events[i].tags = tags_res.result;
         }
       }
-      this.setState({ newEventsCount: new_events_count });
 
-      await this.setState({ all_events: deduped_events, events: deduped_events });
-      await this.filter();
-      let pageCoverInfo = {
-        message: '',
-        eventsLoaded: null,
-        eventsToLoad: null,
-      }
-      await this.setState({ pageCover: false, pageCoverInfo });
+      setTimeout(() => {
+        this.setState({ pageCoverInfo: {
+          message: 'Finished',
+          eventsLoaded: deduped_events.length,
+          eventsToLoad: deduped_events.length,
+        }})
+      }, this.state.loadingTimeout);
+
+      this.setState({ loading: false });
+      this.setState({ newEventsCount: new_events_count, all_events: deduped_events, events: deduped_events }, this.filter);
+      this.setState({ pageCover: false });
 
     } catch(err) {
       console.log("APP_DID_MOUNT ERROR: ", err);
@@ -151,43 +167,58 @@ class App extends Component {
   }
 
   getEvents = async () => {
-    console.log('getting events');
-    let pageCoverInfo = {
-      message: `Fetching events from database`,
-      eventsLoaded: null,
-      eventsToLoad: null,
+    try {
+      const response = await fetch('/api/events/');
+      const body = await response.json();
+      console.log(body.result.length + ' events found');
+      return body;
+    } catch(err) {
+      console.error('FETCH_EVENTS_ERR:', err);
+      return err;
     }
-    this.setState({ pageCoverInfo });
-    let t0 = performance.now();
-    const response = await fetch('/api/events/');
-    const body = await response.json();
-    let t1 = performance.now();
-    console.log(body.result.length + ' events found in ' + ((t1 - t0) / 1000) + ' seconds');
-    return body;
   };
 
   getTags = async (id) => {
-    const response = await fetch(`/api/events/${id}/tags`);
-    const body = await response.json();
-    return body;
-  };
-
-  getOrganizers = async (id) => {
-    const response = await fetch(`/api/events/${id}/organizers`);
-    const body = await response.json();
-    return body;
-  };
-
-  scrapeEvents = async () => {
-    if (prompt("Enter secret to continue.") === '19hz') {
-      const response = await fetch(`/api/scrape`);
+    try {
+      const response = await fetch(`/api/events/${id}/tags`);
       const body = await response.json();
       return body;
-    } else {
-      alert("Access denied");
+    } catch(err) {
+      return err;
     }
   };
 
+  getOrganizers = async (id) => {
+    try {
+      const response = await fetch(`/api/events/${id}/organizers`);
+      const body = await response.json();
+      return body;
+    } catch(err) {
+      return err;
+    }
+  };
+
+  scrapeEvents = async () => {
+    try {
+      if (prompt("Enter secret to continue.") === '19hz') {
+        const response = await fetch(`/api/scrape`);
+        const body = await response.json();
+        return body;
+      } else {
+        alert("Access denied");
+      }
+    } catch(err) {
+      return err;
+    }
+  };
+
+  updateLoadingScreen = async (pageCoverInfo) => {
+    try {
+        this.setState({ pageCoverInfo });
+    } catch(err) {
+      return err;
+    }
+  }
 
   handleEventClick(marker) {
     this.refs.map.showMarker(marker);
@@ -202,17 +233,16 @@ class App extends Component {
     } else {
       days_filter.push(value);
     }
-    this.setState({ settings: { ...this.state.settings, days: days_filter }, shouldUpdate: false }, this.filter);
+    this.setState({ settings: { ...this.state.settings, days: days_filter }}, this.filter);
   }
 
   filter = async () => {
     try {
-      console.log("filter");
       let events = await this.filterDateRange();
       events = await this.filterDays(events);
       events = await this.filterRadius(events);
       await this.refs.map.setMarkers(events);
-      await this.setState({ events, shouldUpdate: true  });
+      await this.setState({ events });
     } catch(err) {
       console.log("FILTER ERROR: ", err);
     }
@@ -231,7 +261,6 @@ class App extends Component {
         events.push(all_events[i]);
       }
     }
-    console.log(events.length + " events in the date range");
     return events;
   }
 
@@ -241,9 +270,9 @@ class App extends Component {
     let events = [];
 
     for (let i=0; i < all_events.length; i++) {
-      let date_parts = all_events[i].date.split('-');
-      let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
-      let day = date.getDay();
+      // let date_parts = all_events[i].date.split('-');
+      // let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
+      let day = new Date(all_events[i].date).getDay();
 
       for (let j=0; j < days_filter.length; j++) {
         if (day === days_filter[j]) {
@@ -303,27 +332,20 @@ class App extends Component {
     this.setState({ modalEvents: events });
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return nextState.shouldUpdate;
-  }
-
   render() {
-    let loading_bars = [];
-    for (let i=0; i < 10; i++) {
-      loading_bars.push(<div className="bar" key={i}></div>);
-    }
     let settings = this.state.settings;
     let changeDayFilter = this.changeDayFilter;
-
+    let loading;
+    if (this.state.loading) {
+      loading = (<LoadingScreen ref='loadingScreen'
+        message={this.state.pageCoverInfo.message}
+        eventsLoaded={this.state.pageCoverInfo.eventsLoaded}
+        eventsToLoad={this.state.pageCoverInfo.eventsToLoad}
+        />);
+    }
     return (
       <div className="App row app-row">
-        <div className="page-cover" style={{display: this.state.pageCover ? 'block' : 'none'}} >
-          <div id="bars">{loading_bars}<h6>{this.state.pageCoverInfo.message}</h6></div>
-          <div className="progress events-progress">
-            <div className="progress-bar" role="progressbar" style={{ width: (this.state.pageCoverInfo.eventsLoaded / this.state.pageCoverInfo.eventsToLoad * 100) + "%"}} aria-valuenow={this.state.pageCoverInfo.eventsLoaded} aria-valuemin="0" aria-valuemax={this.state.pageCoverInfo.eventsToLoad}></div>
-          </div>
-        </div>
-
+        {loading}
         <MarkerModal events={this.state.modalEvents} />
 
         <div className="events-counter">
@@ -428,47 +450,6 @@ class App extends Component {
         </div>
       </div>
     );
-  }
-
-  getTagColor(id) {
-    const COLORS = [
-      '#f44336',
-      '#E91E63',
-      '#9C27B0',
-      '#673AB7',
-      '#3F51B5',
-      '#2196F3',
-      '#03A9F4',
-      '#00BCD4',
-      '#009688',
-      '#4CAF50',
-      '#8BC34A',
-      '#CDDC39',
-      '#FFEB3B',
-      '#FFC107',
-      '#FF9800',
-      '#FF5722',
-      '#795548',
-      '#9E9E9E',
-      '#607D8B',
-      '#d50000',
-      '#C51162',
-      '#AA00FF',
-      '#6200EA',
-      '#304FFE',
-      '#2962FF',
-      '#0091EA',
-      '#00B8D4',
-      '#00BFA5',
-      '#00C853',
-      '#64DD17',
-      '#AEEA00',
-      '#FFD600',
-      '#FFAB00',
-      '#FF6D00',
-      '#DD2C00',
-    ];
-    return COLORS[id % COLORS.length];
   }
 }
 

@@ -14,6 +14,20 @@ body {
 	left: 0;
 	text-align: center;
 }
+.page-cover-message {
+    width: 200px;
+    position: absolute;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #FFF;
+    position: absolute;
+    top: 52%;
+    animation-name: loading;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+}
 
 #bars {
     height: 50px;
@@ -27,18 +41,6 @@ body {
 }
 
 
-#bars h6 {
-	color: #FFF;
-	text-align: center;
-	position: absolute;
-	top: 60px;
-	margin: 0 auto;
-	left: 0;
-	right: 0;
-    animation-name: loading;
-    animation-duration: 2s;
-    animation-iteration-count: infinite;
-}
 
 .bar {
    background: #FFF;
@@ -48,6 +50,7 @@ body {
     width: 6px;      
     animation: sound 0ms -800ms linear infinite alternate;
 }
+
 
 @keyframes sound {
     0% {

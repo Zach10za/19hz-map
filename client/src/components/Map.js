@@ -15,6 +15,7 @@ class Map extends Component {
       apiKey: 'AIzaSyDgTT27dxGtMUKso84YXTvAV48x9923pO8',
       markers: [],
       clusters: [],
+      circle: null,
       currentLocation: null,
       window: {
         center: { lat: 34.0522, lng: -118.2437 },
@@ -142,8 +143,10 @@ class Map extends Component {
 
   updateCircleRadius(radius) {
     let circle = this.state.circle;
-    circle.setRadius(1609.3 * radius);
-    this.setState({ circle });
+    if (circle) {
+      circle.setRadius(1609.3 * radius);
+      this.setState({ circle });
+    }
   }
 
   updateCircleCenter(center) {
@@ -163,7 +166,7 @@ class Map extends Component {
       center: this.state.currentLocation || this.state.window.center,
       map: map,
       radius: 1609.3 * this.props.getFilterRadius(),    // 10 miles in metres
-      fillColor: 'rgba(0,100,200,0.3)',
+      fillColor: 'rgba(0,100,200,0.2)',
       strokeColor: 'rgba(0,100,200,0.5)',
       strokeWeight: 1
     });

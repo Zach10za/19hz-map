@@ -7,30 +7,26 @@ const OrganizerController = require('../controllers/OrganizerController.js');
 const TagController = require('../controllers/TagController.js');
 const VenueController = require('../controllers/VenueController.js');
 
-/* GET home page. */
-router.get('/api/test', function(req, res, next) {
-    res.send({route: '/api/test', location: 'root'});
-});
-
+// Scrape events from 19hz.info
 router.get('/api/scrape', EventController.scrapeEvents);
 
-
-router.get('/events', EventController.index);
+// API calls for events
 router.get('/api/events', EventController.index);
 router.get('/api/events/:id/tags', EventController.getTags);
 router.get('/api/events/:id/organizers', EventController.getOrganizers);
 
+// API calls for organizers
 router.get('/api/organizers', OrganizerController.getAll);
 router.post('/api/organizers/findorcreate', OrganizerController.findOrCreate);
 router.get('/api/organizers/:id/events', EventController.findByOrganizer);
 
-router.get('/tags', TagController.getAll);
+// API calls for tags
 router.post('/tags/create', TagController.create);
 router.post('/tags/findorcreate', TagController.findOrCreate);
 router.get('/tags/:id', TagController.findById);
 router.get('/tags/:id/events', EventController.findByTag);
 
-router.get('/venues', VenueController.index);
+// API calls for venues
 router.get('/api/venues', VenueController.getAll);
 router.post('/api/venues/findorcreate', VenueController.findOrCreate);
 router.get('/api/venues/:id/events', EventController.findByVenue);

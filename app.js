@@ -8,7 +8,6 @@ var db = require('./db')
 
 
 var index = require('./routes/index');
-var api = require('./routes/api');
 
 var app = express();
 
@@ -35,7 +34,6 @@ app.use('/css',express.static(path.join(__dirname, 'public/stylesheets')));
 app.use('/js',express.static(path.join(__dirname, 'public/javascripts')));
 
 app.use('/', index);
-app.use('/api', api);
 
 
 // Connect to MySQL on start

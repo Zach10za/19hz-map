@@ -42,17 +42,23 @@ class MarkerModal extends Component {
   render() {
     // console.log(this.props.events);
     let events = [];
-    let handleVenueClick = this.handleVenueClick;
+    const handleVenueClick = this.handleVenueClick;
+    const getTagColor = this.getTagColor;
     if (this.state.modalGroupBy === 'events') {
       events = this.props.events.map((event, i) => {
         return (
           <a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>
             <h5 className="mb-1">{event.title}</h5>
-            <p className="mb-1">{event.venue.name}</p>
-            <div className="d-flex w-100 justify-content-between">
-              <small>{event.time}</small>
-              <small>{new Date(event.date).toLocaleDateString()}</small>
+            <div className="d-flex w-100  justify-content-between">
+              <p className="mb-0">{event.venue.name}</p>
+              <p className="mb-0">{event.time} | {new Date(event.date).toDateString()}</p>
             </div>
+{/*            <div className="mt-2">
+              {event.tags.map((tag) => {
+                let color = getTagColor(tag.id);
+                return (<div className="tag" style={{ backgroundColor: `rgba(${color[0]},${color[1]},${color[2]}, ${color[3]})` }} key={tag.id}>{tag.tag}</div>);
+              })}
+            </div>*/}
           </a>)
       })
     } else if (this.state.modalGroupBy === 'venues') {
@@ -64,11 +70,16 @@ class MarkerModal extends Component {
               {venue.events.map((event, j) => {
                 return (<a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>
                   <h5 className="mb-1">{event.title}</h5>
-                  <p className="mb-1">{event.venue.name}</p>
-                  <div className="d-flex w-100 justify-content-between">
-                    <small>{event.time}</small>
-                    <small>{event.date}</small>
+                  <div className="d-flex w-100  justify-content-between">
+                    <p className="mb-0">{event.venue.name}</p>
+                    <p className="mb-0">{event.time} | {new Date(event.date).toDateString()}</p>
                   </div>
+      {/*            <div className="mt-2">
+                    {event.tags.map((tag) => {
+                      let color = getTagColor(tag.id);
+                      return (<div className="tag" style={{ backgroundColor: `rgba(${color[0]},${color[1]},${color[2]}, ${color[3]})` }} key={tag.id}>{tag.tag}</div>);
+                    })}
+                  </div>*/}
                 </a>)
               })}
             </div>
@@ -79,7 +90,9 @@ class MarkerModal extends Component {
       <div className="modal fade" id="eventsModal" tabIndex="-1" role="dialog" aria-hidden="true">
         <div className="modal-dialog modal-dialog-centered" role="document">
           <div className="modal-content">
+
             <div className="modal-header">
+
               <div className="btn-group btn-group-toggle">
                 <label className={this.state.modalGroupBy === 'events' ? "btn btn-info active" : "btn btn-info"}>
                   <input onChange={() => this.setState({ modalGroupBy: 'events' })} type="radio" name="options" id="group-by-event" autoComplete="off" checked={this.state.modalGroupBy === 'events' ? true : false}/> Event
@@ -88,19 +101,38 @@ class MarkerModal extends Component {
                   <input onChange={() => this.setState({ modalGroupBy: 'venues' })} type="radio" name="options" id="group-by-venue" autoComplete="off" checked={this.state.modalGroupBy === 'venues' ? true : false}/> Venue
                 </label>
               </div>
+
               <button type="button" className="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
+
             <div className="modal-body">
               <div className="list-group">
               {events}
               </div>
             </div>
+
           </div>
         </div>
       </div>
     );
+  }
+
+
+  getTagColor(id) {
+    const COLORS = [
+      [181,137,0],
+      [203,75,22],
+      [220,50,47],
+      [211,54,130],
+      [108,113,196],
+      [38,139,210],
+      [42,161,152],
+      [133,153,0],
+    ];
+    let opacity = (20 - Math.ceil(id / COLORS.length)) / 20;
+    return [...COLORS[id % COLORS.length], opacity];
   }
 }
 
