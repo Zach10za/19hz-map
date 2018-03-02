@@ -1,21 +1,19 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import '../App.css';
+const actions = require('../actions/index');
 
 class Marker extends Component {
 
   constructor(props) {
     super(props);
-    this.props = props;
     this.state = {
-      events: props.events,
       opacity: 0
     }
   }
 
   componentDidMount() {
-    // setTimeout(() => {
     this.setState({opacity: 1});
-    // }, 100);
   }
 
   componentWillUnmount() {
@@ -43,7 +41,7 @@ class Marker extends Component {
     return (
       <div 
         className={this.props.text === "Current_Position" ? "user-marker map-marker" : "map-marker"}
-        onClick={() => this.props.onMarkerClick(this.props.events)}
+        onClick={() => this.props.setModalEvents(this.props.events)}
         style={this.props.$hover ? hoverStyles : styles}
         data-toggle="modal" data-target="#eventsModal">
 
@@ -54,4 +52,15 @@ class Marker extends Component {
   }
 }
 
-export default Marker;
+const mapStateToProps = (state) => {
+  return {};
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setModalEvents: (modalEvents) => dispatch(actions.setModalEvents(modalEvents)),
+  };
+}
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(Marker);

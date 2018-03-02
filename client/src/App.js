@@ -1,42 +1,14 @@
 import React, { Component } from 'react';
-// import Event from './components/Event.js';
+import { connect } from 'react-redux';
 import Map from './components/Map.js';
 import MarkerModal from './components/MarkerModal.js';
 import LoadingScreen from './components/LoadingScreen.js';
+const actions = require('./actions/index');
 
 class App extends Component {
 
   constructor() {
     super();
-    this.state = {
-      all_events: [],
-      events: [],
-      modalEvents: [],
-      newEventsCount: 0,
-      settings: {
-        dateRange: {
-          min: '',
-          max: '',
-        },
-        days: [0,1,2,3,4,5,6],
-        radius: 50,
-      },
-      showSettings: false,
-      pageCoverInfo: {
-        message: 'loading',
-        eventsLoaded: null,
-        eventsToLoad: null,
-      },
-      error: {
-        isError: false,
-        message: '',
-      },
-      loadingMessage: 'loading',
-      loading: true,
-      loadingTimeout: 10
-    };
-    this.updateLoadingScreen = this.updateLoadingScreen.bind(this);
-    this.handleEventClick = this.handleEventClick.bind(this);
     this.filter = this.filter.bind(this);
     this.filterDays = this.filterDays.bind(this);
     this.filterRadius = this.filterRadius.bind(this);
@@ -44,26 +16,31 @@ class App extends Component {
   }
 
   componentWillMount() {
-    let cached_state = localStorage.getItem('state');
-    if (cached_state) {
-      cached_state = JSON.parse(cached_state);
+    // Get Cached events and settings
+    let cached_allEvents = localStorage.getItem("allEvents");
+    let cached_settings = localStorage.getItem("settings");
+    let cached_currentLocation = localStorage.getItem("currentLocation");
+    let cached_window = localStorage.getItem("window");
 
+    if (cached_allEvents) {
       let tzoffset = (new Date()).getTimezoneOffset() * 60000;
       let cur_date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
-
-      this.setState(cached_state, () => {
-        let all_events = this.state.all_events;
-        all_events = all_events.filter((event, i) => {
-          return event.date >= cur_date;
-        });
-        this.setState({ all_events, events: all_events });
+      let all_events = JSON.parse(cached_allEvents);
+      all_events = all_events.filter((event, i) => {
+        return event.date >= cur_date;
       });
+      this.props.setAllEvents(all_events);
     }
-    this.setState({loading: true});
-
+    if (cached_settings) this.props.setSettings(JSON.parse(cached_settings));
+    if (cached_currentLocation) this.props.setCurrentLocation(JSON.parse(cached_currentLocation));
+    if (cached_window) this.props.setWindow(JSON.parse(cached_window));
+    console.log(this.props.window);
+    this.props.setLoading(true);
   }
 
   componentDidMount = async () => {
+    const loadingTimeout = 10;
+
     const removeDuplicatesBy = async (keyFn, array) => {
       try {
         let mySet = new Set();
@@ -79,17 +56,16 @@ class App extends Component {
 
     try {
       setTimeout(() => {
-        this.setState({ pageCoverInfo: {
+        this.props.setLoadingMessage({
           message: 'Fetching events',
           eventsLoaded: 0,
           eventsToLoad: 0,
-        }})
-      }, this.state.loadingTimeout);
+        })
+      }, loadingTimeout);
 
       let tzoffset = (new Date()).getTimezoneOffset() * 60000;
       let date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
-
-      this.setState({ settings: { ...this.state.settings, dateRange: { min: date, max: '' }} });
+      this.props.setSettingsDateRange({ min: date, max: '' });
 
       let res = await this.getEvents();
       let events = [];
@@ -100,12 +76,12 @@ class App extends Component {
         if(event.venue.lat && event.venue.lng) {
       
           setTimeout(() => {
-            this.setState({ pageCoverInfo: {
+            this.props.setLoadingMessage({
               message: 'Getting stored events',
               eventsLoaded: i,
               eventsToLoad: res.result.length,
-            }})
-          }, this.state.loadingTimeout);
+            })
+          }, loadingTimeout);
 
           let date_parts = event.event_date.split('-');
           let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
@@ -133,22 +109,19 @@ class App extends Component {
           events.push(ev);
         }
       }
+      const deduped_events = await removeDuplicatesBy(x => x.id, [...this.props.allEvents, ...events]);
 
-      const deduped_events = await removeDuplicatesBy(x => x.id, [...this.state.all_events, ...events]);
 
-      let new_events_count = 0;
       for (let i=0; i < deduped_events.length; i++) {
 
         if ((!deduped_events[i].organizers || !deduped_events[i].tags) || (deduped_events[i].organizers.length < 1 && deduped_events[i].tags.length < 1)) {
-          new_events_count++;
-
           setTimeout(() => {
-            this.setState({ pageCoverInfo: {
+            this.props.setLoadingMessage({
               message: 'Processing events',
               eventsLoaded: i,
               eventsToLoad: deduped_events.length,
-            }})
-          }, this.state.loadingTimeout);
+            })
+          }, loadingTimeout);
 
           // const organizers_res = await this.getOrganizers(deduped_events[i].id);
           // deduped_events[i].organizers = organizers_res.result;
@@ -159,21 +132,30 @@ class App extends Component {
       }
 
       setTimeout(() => {
-        this.setState({ pageCoverInfo: {
+        this.props.setLoadingMessage({
           message: 'Finished',
           eventsLoaded: deduped_events.length,
           eventsToLoad: deduped_events.length,
-        }})
-      }, this.state.loadingTimeout);
+        })
+      }, loadingTimeout);
 
-      this.setState({ newEventsCount: new_events_count, all_events: deduped_events, events: deduped_events }, this.filter);
-      this.setState({ loading: false });
+      this.props.setAllEvents(deduped_events);
+      this.props.setCurrentEvents(deduped_events);
+      this.props.setLoading(false);
+
+
+      await this.filter();
 
     } catch(err) {
       console.log("APP_DID_MOUNT ERROR: ", err);
     }
-    
-    window.addEventListener('beforeunload', localStorage.setItem("state", JSON.stringify(this.state)));
+
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem("allEvents", JSON.stringify(this.props.allEvents));
+      localStorage.setItem("settings", JSON.stringify(this.props.settings));
+      localStorage.setItem("currentLocation", JSON.stringify(this.props.currentLocation));
+      localStorage.setItem("window", JSON.stringify(this.props.window));
+    });
   }
 
   getEvents = async () => {
@@ -222,12 +204,8 @@ class App extends Component {
     }
   };
 
-  handleEventClick(marker) {
-    this.refs.map.showMarker(marker);
-  }
-
   changeDayFilter(day_of_week) {
-    let days_filter = this.state.settings.days;
+    let days_filter = this.props.settings.days;
     let value = parseInt(day_of_week, 10);
 
     if (days_filter.indexOf(value) > -1) {
@@ -235,7 +213,8 @@ class App extends Component {
     } else {
       days_filter.push(value);
     }
-    this.setState({ settings: { ...this.state.settings, days: days_filter }}, this.filter);
+    this.props.setSettingsDays(days_filter)
+    this.filter();
   }
 
   filter = async () => {
@@ -243,22 +222,25 @@ class App extends Component {
       let events = await this.filterDateRange();
       events = await this.filterDays(events);
       events = await this.filterRadius(events);
-      await this.refs.map.setMarkers(events);
-      await this.setState({ events });
+      this.props.setCurrentEvents(events);
+      this.props.calculateClusters(this.props.currentEvents, this.props.window.zoom);
     } catch(err) {
       console.log("FILTER ERROR: ", err);
     }
   }
 
   filterDateRange(all_events = null) {
-    let date_range_filter = this.state.settings.dateRange;
-    all_events = all_events || this.state.all_events;
+    let date_range_filter = this.props.settings.dateRange;
+    all_events = all_events || this.props.allEvents;
     let events = [];
 
     for (let i=0; i < all_events.length; i++) {
       let event_date = new Date(all_events[i].date);
-      let min_date = date_range_filter.min ? new Date(date_range_filter.min) : new Date();
+
+      let tzoffset = (new Date()).getTimezoneOffset() * 60000;
+      let min_date = date_range_filter.min ? new Date(date_range_filter.min) : new Date(Date.now() - tzoffset);
       let max_date = date_range_filter.max ? new Date(date_range_filter.max) : null;
+
       if (event_date >= min_date && (event_date <= max_date || !max_date) ) {
         events.push(all_events[i]);
       }
@@ -267,13 +249,11 @@ class App extends Component {
   }
 
   filterDays(all_events = null) {
-    let days_filter = this.state.settings.days;
-    all_events = all_events || this.state.all_events;
+    let days_filter = this.props.settings.days;
+    all_events = all_events || this.props.allEvents;
     let events = [];
 
     for (let i=0; i < all_events.length; i++) {
-      // let date_parts = all_events[i].date.split('-');
-      // let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
       let day = new Date(all_events[i].date).getDay();
 
       for (let j=0; j < days_filter.length; j++) {
@@ -287,9 +267,9 @@ class App extends Component {
   }
 
   filterRadius(all_events = null) {
-    let location = this.refs.map.getCurrentLocation();
-    let radius_filter = this.state.settings.radius;
-    all_events = all_events || this.state.all_events;
+    let location = this.props.currentLocation || this.props.window.center;
+    let radius_filter = this.props.settings.radius;
+    all_events = all_events || this.props.allEvents;
     if (radius_filter > 0) {
       let events = [];
       for (let i=0; i < all_events.length; i++) {
@@ -298,7 +278,7 @@ class App extends Component {
           events.push(all_events[i]);
         }
       }
-      this.refs.map.updateCircleRadius(radius_filter);
+      this.props.updateCircleRadius(radius_filter);
       return events;
     } else {
       return all_events;
@@ -308,7 +288,6 @@ class App extends Component {
   getDistanceBetweenPoints(p1, p2) {
     p1 = {lat: parseFloat(p1.lat), lng: parseFloat(p1.lng)};
     p2 = {lat: parseFloat(p2.lat), lng: parseFloat(p2.lng)};
-
 
     function toRad(x) {
       return x * Math.PI / 180;
@@ -325,48 +304,38 @@ class App extends Component {
   }
 
   handleDateRangeChange(e) {
-    let settings = this.state.settings;
+    let dateRange = this.props.settings.dateRange;
     if (e.target.id === 'min-date') {
-      settings.dateRange.min = e.target.value;
+      dateRange.min = e.target.value;
     } else if (e.target.id === 'max-date') {
-      settings.dateRange.max = e.target.value;
+      dateRange.max = e.target.value;
     }
-    this.setState({ settings }, this.filter);
-  }
-
-  openMarkerModal(events) {
-    this.setState({ modalEvents: events });
+    this.props.setSettingsDateRange(dateRange);
+    this.filter();
   }
 
   render() {
-    let settings = this.state.settings;
+    let settings = this.props.settings;
     let changeDayFilter = this.changeDayFilter;
     let loading;
-    if (this.state.loading) {
-      loading = (<LoadingScreen ref='loadingScreen'
-        message={this.state.pageCoverInfo.message}
-        eventsLoaded={this.state.pageCoverInfo.eventsLoaded}
-        eventsToLoad={this.state.pageCoverInfo.eventsToLoad}
-        />);
+    if (this.props.isLoading) {
+      loading = (<LoadingScreen />);
     }
     return (
       <div className="App row app-row">
         {loading}
-        <MarkerModal events={this.state.modalEvents} />
+        <MarkerModal events={this.props.modalEvents} />
 
         <div className="events-counter">
-          {this.state.events.length} Events
-          <span className="ml-1 badge badge-info" style={{display: (this.state.newEventsCount > 0 && this.state.newEventsCount < this.state.all_events.length) ? 'inline' : 'none'}}>
-            {this.state.newEventsCount}
-          </span>
+          {this.props.currentEvents.length} Events
         </div>
         <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
 
-        <div id="settings" className={"settings-container" + (this.state.showSettings ? "" : " hide")}>
+        <div id="settings" className={"settings-container" + (this.props.showSettings ? "" : " hide")}>
           <button className="btn btn-primary btn-settings"
             data-toggle="button"
-            aria-pressed={this.state.showSettings}
-            onClick={(e) => this.setState({ showSettings: !this.state.showSettings }) }>{ this.state.showSettings ? 'Hide' : 'Settings'}</button>
+            aria-pressed={this.props.showSettings}
+            onClick={() => this.props.setShowSettings(!this.props.showSettings)}>{ this.props.showSettings ? 'Hide' : 'Settings'}</button>
 
           <div className="row mb-5">
             <div className="col-md-12">
@@ -380,10 +349,10 @@ class App extends Component {
 
               <div v="form-row">
                 <div className="col">
-                  <input type="date" className="form-control" id="min-date" value={this.state.settings.dateRange.min} onChange={this.handleDateRangeChange.bind(this)}/>
+                  <input type="date" className="form-control" id="min-date" value={settings.dateRange.min} onChange={this.handleDateRangeChange.bind(this)}/>
                 </div>
                 <div className="col">
-                  <input type="date" className="form-control" id="max-date" value={this.state.settings.dateRange.max} onChange={this.handleDateRangeChange.bind(this)}/>
+                  <input type="date" className="form-control" id="max-date" value={settings.dateRange.max} onChange={this.handleDateRangeChange.bind(this)}/>
                 </div>
               </div>
 
@@ -408,7 +377,7 @@ class App extends Component {
           <div className="row mb-5">
             <div className="col-md-12">
               <h4>Location Radius</h4>
-              <small className="text-muted mb-1">({this.state.settings.radius} miles)</small>
+              <small className="text-muted mb-1">({settings.radius} miles)</small>
               <div className="input-group radius-range">
                 <input
                   type="range"
@@ -416,26 +385,14 @@ class App extends Component {
                   min="5"
                   max="100"
                   step="1"
-                  onChange={(e) => this.setState({ settings: { ...this.state.settings, radius: e.target.value} }, this.filter)}
+                  onChange={(e) => {this.props.setSettingsRadius(e.target.value); this.filter()}}
                   disabled={false}
-                  value={this.state.settings.radius}
+                  value={settings.radius}
                   aria-label="Radius"
                   aria-describedby="radius-input" />
               </div>
             </div>
           </div>
-
-{/*          <div className="row mb-5">
-            <div className="col-md-12">
-              <h4>Location Radius</h4>
-              <div className="input-group radius-input">
-                <input type="text" className="form-control" onChange={(e) => this.setState({ settings: { ...this.state.settings, radius: e.target.value} }, this.filter)} disabled={false} value={this.state.settings.radius} aria-label="Radius" aria-describedby="radius-input" />
-                <div className="input-group-append">
-                  <span className="input-group-text" id="radius-input"> miles</span>
-                </div>
-              </div>
-            </div>
-          </div>*/}
 
           <div className="row mb-2 settings-btns">
             <div className="col-md-12">
@@ -447,16 +404,38 @@ class App extends Component {
         </div>
 
         <div className="map-container">
-          <Map
-            ref="map"
-            getFilterRadius={() => this.state.settings.radius}
-            settings={this.settings}
-            pageCover={(pageCover) => this.setState({pageCover})}
-            openMarkerModal={this.openMarkerModal.bind(this)} />
+          <Map ref="gmap" />
         </div>
       </div>
     );
   }
 }
 
-export default App;
+const mapStateToProps = (state) => {
+  return state;
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setLoading: (bool) => dispatch(actions.setLoading(bool)),
+    setLoadingMessage: (loadingMessage) => dispatch(actions.setLoadingMessage(loadingMessage)),
+    setAllEvents: (allEvents) => dispatch(actions.setAllEvents(allEvents)),
+    addAllEvent: (event) => dispatch(actions.addAllEvent(event)),
+    setCurrentEvents: (currentEvents) => dispatch(actions.setCurrentEvents(currentEvents)),
+    addCurrentEvents: (event) => dispatch(actions.addCurrentEvents(event)),
+    setModalEvents: (modalEvents) => dispatch(actions.setModalEvents(modalEvents)),
+    setShowSettings: (bool) => dispatch(actions.setShowSettings(bool)),
+    setSettings: (settings) => dispatch(actions.setSettings(settings)),
+    setSettingsDateRange: (dateRange) => dispatch(actions.setSettingsDateRange(dateRange)),
+    setSettingsDays: (days) => dispatch(actions.setSettingsDays(days)),
+    setSettingsRadius: (radius) => dispatch(actions.setSettingsRadius(radius)),
+    updateCircleRadius: (radius) => dispatch(actions.updateCircleRadius(radius)),
+    updateCircleCenter: (center) => dispatch(actions.updateCircleCenter(center)),
+    calculateClusters: (events, zoom) => dispatch(actions.calculateClusters(events, zoom)),
+    setCurrentLocation: (currentLocation) => dispatch(actions.setCurrentLocation(currentLocation)),
+    setWindow: (window) => dispatch(actions.setWindow(window)),
+  };
+}
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);

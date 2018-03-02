@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import '../App.css';
 
 class MarkerModal extends Component {
@@ -7,7 +8,6 @@ class MarkerModal extends Component {
     super(props);
     this.props = props;
     this.state = {
-      events: props.events,
       modalGroupBy: 'events',
     }
   }
@@ -40,12 +40,11 @@ class MarkerModal extends Component {
   }
 
   render() {
-    // console.log(this.props.events);
     let events = [];
     const handleVenueClick = this.handleVenueClick;
-    const getTagColor = this.getTagColor;
+    // const getTagColor = this.getTagColor;
     if (this.state.modalGroupBy === 'events') {
-      events = this.props.events.map((event, i) => {
+      events = this.props.modalEvents.map((event, i) => {
         return (
           <a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>
             <h5 className="mb-1">{event.title}</h5>
@@ -62,7 +61,7 @@ class MarkerModal extends Component {
           </a>)
       })
     } else if (this.state.modalGroupBy === 'venues') {
-      events = this.sortByVenue(this.props.events).map((venue, i) => {
+      events = this.sortByVenue(this.props.modalEvents).map((venue, i) => {
         return (
           <div className="list-group-item list-group-item-action flex-column align-items-start" onClick={(e) => handleVenueClick(e)} key={i}>
             <h5 className="mb-1">{venue.name}</h5>
@@ -120,20 +119,30 @@ class MarkerModal extends Component {
   }
 
 
-  getTagColor(id) {
-    const COLORS = [
-      [181,137,0],
-      [203,75,22],
-      [220,50,47],
-      [211,54,130],
-      [108,113,196],
-      [38,139,210],
-      [42,161,152],
-      [133,153,0],
-    ];
-    let opacity = (20 - Math.ceil(id / COLORS.length)) / 20;
-    return [...COLORS[id % COLORS.length], opacity];
-  }
+  // getTagColor(id) {
+  //   const COLORS = [
+  //     [181,137,0],
+  //     [203,75,22],
+  //     [220,50,47],
+  //     [211,54,130],
+  //     [108,113,196],
+  //     [38,139,210],
+  //     [42,161,152],
+  //     [133,153,0],
+  //   ];
+  //   let opacity = (20 - Math.ceil(id / COLORS.length)) / 20;
+  //   return [...COLORS[id % COLORS.length], opacity];
+  // }
 }
 
-export default MarkerModal;
+const mapStateToProps = (state) => {
+  return {
+    modalEvents: state.modalEvents,
+  };
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {};
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(MarkerModal);

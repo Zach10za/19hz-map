@@ -1,38 +1,22 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import GoogleMapReact from 'google-map-react';
 // import {latLng2Tile} from 'google-map-react/utils';
 import Marker from './Marker.js';
 import '../App.css';
+const actions = require('../actions/index');
+
 
 class Map extends Component {
 
+
   constructor(props) {
     super(props);
-    this.state = {
-      // center: { lat: 34.0522, lng: -118.2437 },
-      // zoom: 10,
-      events: [],
-      apiKey: 'AIzaSyDgTT27dxGtMUKso84YXTvAV48x9923pO8',
-      markers: [],
-      clusters: [],
-      circle: null,
-      showCircle: false,
-      currentLocation: null,
-      window: {
-        center: { lat: 34.0522, lng: -118.2437 },
-        zoom: 10,
-        bounds: {},  
-      },
-      shouldUpdate: true,
-    };
-    this.calculateClusters = this.calculateClusters.bind(this);
-    this.updateCircleRadius = this.updateCircleRadius.bind(this);
-    this.updateCircleCenter = this.updateCircleCenter.bind(this);
+    this.apiKey = 'AIzaSyDgTT27dxGtMUKso84YXTvAV48x9923pO8';
     this.handleChange = this.handleChange.bind(this);
     this.handleZoomAnimationStart = this.handleZoomAnimationStart.bind(this);
     this.handleZoomAnimationEnd =this.handleZoomAnimationEnd.bind(this);
     this.customMapsAPICode =this.customMapsAPICode.bind(this);
-    this.openMarkerModal = this.openMarkerModal.bind(this);
   }
 
   componentDidMount() {
@@ -42,162 +26,67 @@ class Map extends Component {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         }
-        this.setState({currentLocation});
-        if (this.state.circle) {
-          this.updateCircleCenter(currentLocation);
-        }
+        this.props.setCurrentLocation(currentLocation);
+        this.props.updateCircleCenter(currentLocation);
       });
     }
-    // this.calculateClusters(this.state.window.zoom);
-  }
-
-  getCurrentLocation() {
-    return this.state.currentLocation || this.state.window.center;
-  }
-
-  calculateClusters(zoom = this.state.window.zoom) {
-    let events = this.state.events;
-    let clusters = [];
-
-    let distance_map = [1,1,1,1,1,1,1,1,0.5,0.3,0.15,0.05,0.02,0.008,0.004,0.001,0.0000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001];
-    let distance = distance_map[zoom];
-
-    // console.log(zoom, distance);
-
-    for (let i=0; i < events.length; i++) {
-
-      if (!events[i].venue.location.lat || !events[i].venue.location.lng) break;
-
-      let new_cluster = {};
-      new_cluster.events = [events[i]];
-      new_cluster.lat = events[i].venue.location.lat;
-      new_cluster.lng = events[i].venue.location.lng;
-
-      let closest = {index: -1, distance: 999};
-
-      for (let j=0; j < clusters.length; j++) {
-        let lat_distance = Math.abs(clusters[j].lat - new_cluster.lat);
-        let lng_distance = Math.abs(clusters[j].lng - new_cluster.lng);
-
-        if (lat_distance < distance && lng_distance < distance) {
-          if (lat_distance + lng_distance < closest.distance ) {
-            closest.index = j;
-            closest.distance = lat_distance + lng_distance;
-          }
-        }
-      }
-      if (closest.index > -1) {
-        new_cluster.events = [...new_cluster.events, ...clusters[closest.index].events];
-        let sum_lat = 0;
-        let sum_lng = 0;
-        for (let x=0; x < clusters[closest.index].events.length; x++) {
-          sum_lat += parseFloat(clusters[closest.index].events[x].venue.location.lat);
-          sum_lng += parseFloat(clusters[closest.index].events[x].venue.location.lng);
-        }
-        new_cluster.lat = sum_lat / clusters[closest.index].events.length;
-        new_cluster.lng = sum_lng / clusters[closest.index].events.length;
-
-        clusters.splice(closest.index, 1);
-      }
-
-      clusters.push(new_cluster);
-
-    }
-
-    this.setState({ clusters: clusters, shouldUpdate: true });
-  }
-
-  setMarkers(events) {
-    this.setState({ events, shouldUpdate: false }, this.calculateClusters);
-  }
-
-  showMarker(center) {
-    let window = {
-      center: { lat:parseFloat(center.lat), lng: parseFloat(center.lng)},
-      zoom: this.state.window.zoom,
-      bounds: this.state.window.bounds
-    };
-    this.setState({ window });
   }
 
   handleChange(change) {
-    let window = {
-      center: change.center,
-      zoom: change.zoom,
-      bounds: change.bounds
-    };
-    this.setState({ window, shouldUpdate: this.state.window.zoom === change.zoom });
+    this.props.setWindowCenter(change.center);
+    if (this.props.window.zoom !== change.zoom) {
+      this.props.setWindowZoom(change.zoom);
+    }
+    this.props.setWindowBounds(change.bounds);
 
   }
 
   handleZoomAnimationStart(e) {
-    this.setState({ clusters: [] });
+    this.props.setClusters([]);
   }
 
   handleZoomAnimationEnd(e) {
-      this.calculateClusters(this.state.window.zoom);
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    return nextState.shouldUpdate;
-  }
-
-  updateCircleRadius(radius) {
-    let circle = this.state.circle;
-    if (circle) {
-      circle.setRadius(1609.3 * radius);
-      this.setState({ circle });
-    }
-  }
-
-  updateCircleCenter(center) {
-    let circle = this.state.circle;
-    circle.setCenter(center);
-    this.setState({ circle });
-  }
-
-  openMarkerModal(events) {
-    this.props.openMarkerModal(events);
+    this.props.calculateClusters(this.props.currentEvents, this.props.window.zoom);
   }
 
   customMapsAPICode(e) {
     let map = e.map;
     let maps = e.maps;
     let circle = new maps.Circle({
-      center: this.state.currentLocation || this.state.window.center,
+      center: this.props.currentLocation || this.props.window.center,
       map: map,
-      radius: 1609.3 * this.props.getFilterRadius(),    // 10 miles in metres
+      radius: 1609.3 * this.props.settings.radius,    // 10 miles in metres
       fillColor: 'rgba(0,100,200,0.2)',
       strokeColor: 'rgba(0,100,200,0.5)',
       strokeWeight: 1
     });
-    this.setState({ circle });
+    this.props.setCircle(circle);
   }
 
   render() {
-    let bounds = this.state.window.bounds;
-    let openMarkerModal = this.openMarkerModal;
+    console.log(this.props.window);
+    let bounds = this.props.window.bounds;
     return (
       <GoogleMapReact
-        bootstrapURLKeys={{key: this.state.apiKey}} 
-        zoom={this.state.window.zoom || 10}
-        center={this.state.window.center}
+        bootstrapURLKeys={{key: this.apiKey}} 
+        zoom={this.props.window.zoom || 10}
+        center={this.props.window.center}
         resetBoundsOnResize={true}
         onChange={this.handleChange}
         onZoomAnimationStart={this.handleZoomAnimationStart}
         onZoomAnimationEnd={this.handleZoomAnimationEnd}
-        onChildClick={(i, marker) => this.showMarker({lat: marker.lat, lng: marker.lng})}
+        onChildClick={(i, marker) => this.props.setWindowCenter({lat: marker.lat, lng: marker.lng})}
         onGoogleApiLoaded={this.customMapsAPICode}
         yesIWantToUseGoogleMapApiInternals={true}>
 
-        {this.state.clusters.map((cluster, i) => {
+        {this.props.clusters.map((cluster, i) => {
           if (cluster.lat > bounds.ne.lat || cluster.lat < bounds.se.lat || cluster.lng > bounds.ne.lng || cluster.lng < bounds.nw.lng) {
             return false;
           } else {
-            return (<Marker onMarkerClick={openMarkerModal} lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
+            return (<Marker lat={cluster.lat}  lng={cluster.lng} text={cluster.text} events={cluster.events} key={i} />);
           }
         })}
-        {this.state.currentLocation && (<Marker lat={this.state.currentLocation.lat}  lng={this.state.currentLocation.lng} text="Current_Position" size="5px" events={[]} />)}
+        {this.props.currentLocation && (<Marker lat={this.props.currentLocation.lat}  lng={this.props.currentLocation.lng} text="Current_Position" size="5px" events={[]} />)}
 
 
       </GoogleMapReact>
@@ -205,4 +94,40 @@ class Map extends Component {
   }
 }
 
-export default Map;
+const mapStateToProps = (state) => {
+  return {
+    settings: state.settings,
+    currentEvents: state.currentEvents,
+    clusters: state.clusters,
+    circle: state.circle,
+    showCircle: state.showCircle,
+    currentLocation: state.currentLocation,
+    window: state.window
+    // window: {
+    //   center: { lat: 34.0522, lng: -118.2437 },
+    //   zoom: 10,
+    //   bounds: {},
+    // }
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setModalEvents: (modalEvents) => dispatch(actions.setModalEvents(modalEvents)),
+    setSettingsRadius: (radius) => dispatch(actions.setSettingsRadius(radius)),
+    setClusters: (cluster) => dispatch(actions.setClusters(cluster)),
+    addCluster: (cluster) => dispatch(actions.addCluster(cluster)),
+    updateCircleRadius: (radius) => dispatch(actions.updateCircleRadius(radius)),
+    updateCircleCenter: (center) => dispatch(actions.updateCircleCenter(center)),
+    setCircle: (circle) => dispatch(actions.setCircle(circle)),
+    showCircle: (bool) => dispatch(actions.showCircle(bool)),
+    setCurrentLocation: (currentLocation) => dispatch(actions.setCurrentLocation(currentLocation)),
+    setWindowCenter: (center) => dispatch(actions.setWindowCenter(center)),
+    setWindowZoom: (zoom) => dispatch(actions.setWindowZoom(zoom)),
+    setWindowBounds: (bounds) => dispatch(actions.setWindowBounds(bounds)),
+    calculateClusters: (events, zoom) => dispatch(actions.calculateClusters(events, zoom)),
+  };
+}
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(Map);

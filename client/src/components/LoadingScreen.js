@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import '../App.css';
 
 class LoadingScreen extends Component {
@@ -26,4 +27,17 @@ class LoadingScreen extends Component {
   }
 }
 
-export default LoadingScreen;
+const mapStateToProps = (state) => {
+  return {
+    message: state.loadingMessage.message,
+    eventsLoaded: state.loadingMessage.eventsLoaded,
+    eventsToLoad: state.loadingMessage.eventsToLoad,
+  };
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {};
+}
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(LoadingScreen);

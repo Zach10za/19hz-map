@@ -4,12 +4,13 @@ import './assets/css/bootstrap.min.css';
 import './index.css';
 import './App.css';
 import App from './App';
+import { Provider } from 'react-redux';
 import store from './store/index';
-import { formatEvents } from './actions/index';
 import registerServiceWorker from './registerServiceWorker';
 
-window.store = store;
-window.formatEvents = formatEvents;
-
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(
+	<Provider store={store}>
+		<App />
+	</Provider>
+	, document.getElementById('root'));
 registerServiceWorker();
