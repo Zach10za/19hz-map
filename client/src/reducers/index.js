@@ -10,7 +10,7 @@ const initialState = {
       max: '',
     },
     days: [0,1,2,3,4,5,6],
-    radius: 50,
+    radius: -1,
   },
   showSettings: false,
   loadingMessage: {
@@ -20,9 +20,9 @@ const initialState = {
   },
   isLoading: true,
 
+  map: null,
   clusters: [],
   circle: null,
-  showCircle: false,
   currentLocation: null,
   window: {
     center: { lat: 34.0522, lng: -118.2437 },
@@ -98,8 +98,11 @@ const rootReducer = (state = initialState, action) => {
         }
       };
     case 'SET_SETTINGS_RADIUS':
+      let circle = state.circle;
+      circle.setRadius(1609.3 * action.payload.radius);
       return {
         ...state,
+        circle,
         settings: {
           ...state.settings,
           radius: action.payload.radius,
@@ -116,7 +119,7 @@ const rootReducer = (state = initialState, action) => {
         clusters: [...state.clusters, action.payload.cluster],
       };
     case 'UPDATE_CIRCLE_RADIUS':
-      let circle = state.circle;
+      circle = state.circle;
       circle.setRadius(1609.3 * action.payload.radius);
       return {
         ...state,
@@ -134,10 +137,24 @@ const rootReducer = (state = initialState, action) => {
         ...state,
         circle: action.payload.circle,
       };
-    case 'SHOW_CIRCLE':
+    case 'SET_SETTINGS_SHOW_CIRCLE':
+      circle = state.circle;
+      let radius = state.settings.radius;
+      if (action.payload.showCircle) {
+        radius = 50;
+        circle.setRadius(1609.3 * (radius));
+      } else {
+        radius = -1;
+        circle.setRadius(0);
+      }
       return {
         ...state,
-        showCircle: action.payload.showCircle,
+        circle: circle,
+        settings: {
+          ...state.settings,
+          radius: radius,
+          showCircle: action.payload.showCircle,
+        }
       };
     case 'SET_CURRENT_LOCATION':
       return {
@@ -172,6 +189,11 @@ const rootReducer = (state = initialState, action) => {
           ...state.window,
           bounds: action.payload.bounds,
         }
+      };
+    case 'SET_MAP':
+      return {
+        ...state,
+        map: action.payload.map
       };
     case 'CALCULATE_CLUSTERS':
       return {

@@ -1,6 +1,13 @@
 .App {
 }
 
+.btn-test {
+  z-index: 999;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
 
 .events-progress {
   border-radius: 0;
@@ -217,6 +224,7 @@
   opacity: 0;
   transition: 0.2s;
   background: #41bef4;
+  color: #FFF;
   width: 10px;
   height: 10px;
   border-radius: 50%;

@@ -34,7 +34,6 @@ class App extends Component {
     if (cached_settings) this.props.setSettings(JSON.parse(cached_settings));
     if (cached_currentLocation) this.props.setCurrentLocation(JSON.parse(cached_currentLocation));
     if (cached_window) this.props.setWindow(JSON.parse(cached_window));
-    console.log(this.props.window);
     this.props.setLoading(true);
   }
 
@@ -271,6 +270,7 @@ class App extends Component {
     let radius_filter = this.props.settings.radius;
     all_events = all_events || this.props.allEvents;
     if (radius_filter > 0) {
+      console.log(radius_filter);
       let events = [];
       for (let i=0; i < all_events.length; i++) {
         let distance = this.getDistanceBetweenPoints(location, all_events[i].venue.location);
@@ -325,7 +325,6 @@ class App extends Component {
       <div className="App row app-row">
         {loading}
         <MarkerModal events={this.props.modalEvents} />
-
         <div className="events-counter">
           {this.props.currentEvents.length} Events
         </div>
@@ -347,11 +346,11 @@ class App extends Component {
             <div className="col-md-12">
               <h4>Date Range</h4>
 
-              <div v="form-row">
-                <div className="col">
+              <div className="form-row">
+                <div className="col-md-6">
                   <input type="date" className="form-control" id="min-date" value={settings.dateRange.min} onChange={this.handleDateRangeChange.bind(this)}/>
                 </div>
-                <div className="col">
+                <div className="col-md-6">
                   <input type="date" className="form-control" id="max-date" value={settings.dateRange.max} onChange={this.handleDateRangeChange.bind(this)}/>
                 </div>
               </div>
@@ -376,8 +375,14 @@ class App extends Component {
 
           <div className="row mb-5">
             <div className="col-md-12">
-              <h4>Location Radius</h4>
-              <small className="text-muted mb-1">({settings.radius} miles)</small>
+              <div className="d-flex w-100  justify-content-between">
+                <h4>Location Radius</h4>
+                <button className="btn btn-primary btn-circle" data-toggle="button" aria-pressed={this.props.settings.radius > 0}
+                  onClick={() => {this.props.setSettingsRadius(this.props.settings.radius > 0 ? -1 : 50); this.filter()}} >
+                  { this.props.settings.radius > 0 ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <small className="text-muted mb-1" style={{ opacity: this.props.settings.radius > 0 ? '1' : '0' }}>({settings.radius} miles)</small>
               <div className="input-group radius-range">
                 <input
                   type="range"
@@ -386,21 +391,13 @@ class App extends Component {
                   max="100"
                   step="1"
                   onChange={(e) => {this.props.setSettingsRadius(e.target.value); this.filter()}}
-                  disabled={false}
+                  disabled={this.props.settings.radius < 0}
                   value={settings.radius}
                   aria-label="Radius"
                   aria-describedby="radius-input" />
               </div>
             </div>
           </div>
-
-          <div className="row mb-2 settings-btns">
-            <div className="col-md-12">
-              <button className="btn btn-primary btn-block btn-lg" onClick={() => alert('save')}>Save</button>
-              <button className="btn btn-link btn-block" onClick={() => alert('reset')}>Reset</button>
-            </div>
-          </div>
-
         </div>
 
         <div className="map-container">
@@ -434,6 +431,7 @@ const mapDispatchToProps = (dispatch) => {
     calculateClusters: (events, zoom) => dispatch(actions.calculateClusters(events, zoom)),
     setCurrentLocation: (currentLocation) => dispatch(actions.setCurrentLocation(currentLocation)),
     setWindow: (window) => dispatch(actions.setWindow(window)),
+    setSettingsShowCircle: (bool) => dispatch(actions.setSettingsShowCircle(bool)),
   };
 }
 

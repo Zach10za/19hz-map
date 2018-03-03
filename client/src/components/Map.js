@@ -52,6 +52,7 @@ class Map extends Component {
   customMapsAPICode(e) {
     let map = e.map;
     let maps = e.maps;
+    this.props.setMap(map);
     let circle = new maps.Circle({
       center: this.props.currentLocation || this.props.window.center,
       map: map,
@@ -64,7 +65,6 @@ class Map extends Component {
   }
 
   render() {
-    console.log(this.props.window);
     let bounds = this.props.window.bounds;
     return (
       <GoogleMapReact
@@ -100,9 +100,9 @@ const mapStateToProps = (state) => {
     currentEvents: state.currentEvents,
     clusters: state.clusters,
     circle: state.circle,
-    showCircle: state.showCircle,
     currentLocation: state.currentLocation,
-    window: state.window
+    window: state.window,
+    map: state.map,
     // window: {
     //   center: { lat: 34.0522, lng: -118.2437 },
     //   zoom: 10,
@@ -120,11 +120,12 @@ const mapDispatchToProps = (dispatch) => {
     updateCircleRadius: (radius) => dispatch(actions.updateCircleRadius(radius)),
     updateCircleCenter: (center) => dispatch(actions.updateCircleCenter(center)),
     setCircle: (circle) => dispatch(actions.setCircle(circle)),
-    showCircle: (bool) => dispatch(actions.showCircle(bool)),
+    setSettingsShowCircle: (bool) => dispatch(actions.setSettingsShowCircle(bool)),
     setCurrentLocation: (currentLocation) => dispatch(actions.setCurrentLocation(currentLocation)),
     setWindowCenter: (center) => dispatch(actions.setWindowCenter(center)),
     setWindowZoom: (zoom) => dispatch(actions.setWindowZoom(zoom)),
     setWindowBounds: (bounds) => dispatch(actions.setWindowBounds(bounds)),
+    setMap: (map) => dispatch(actions.setMap(map)),
     calculateClusters: (events, zoom) => dispatch(actions.calculateClusters(events, zoom)),
   };
 }

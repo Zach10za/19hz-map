@@ -153,9 +153,9 @@ export const setCircle = (circle) => {
   };
 }
 
-export const showCircle = (bool) => {
+export const setSettingsShowCircle = (bool) => {
   return {
-    type: 'SHOW_CIRCLE',
+    type: 'SET_SETTINGS_SHOW_CIRCLE',
     payload:  {
       showCircle: bool
     }
@@ -203,6 +203,15 @@ export const setWindowBounds = (bounds) => {
     type: 'SET_WINDOW_BOUNDS',
     payload:  {
       bounds // { ne, nw,  se, sw }
+    }
+  };
+}
+
+export const setMap = (map) => {
+  return {
+    type: 'SET_MAP',
+    payload:  {
+      map
     }
   };
 }

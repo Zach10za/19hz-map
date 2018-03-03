@@ -48,18 +48,11 @@ exports.getAndStorePreciseLocation = async (location) => {
             } else {
                 console.log("Venue found. Getting precise location for: " + location);
                 const places_result = await googleMaps.places({query: req.body.location, language: 'en'}).asPromise();
-                if (places_result.status === 200) console.log("Precise location found. Now getting picture with reference: " + places_result.json.results[0].photos[0].photo_reference);
-                const places_photo = await googleMaps.placesPhoto({maxwidth: 600, photoreference: places_result.json.results[0].photos[0].photo_reference}).asPromise();
-                console.log("Found photo");
-
-                let path = '/images/' + Date.now() + '.jpg';
-                places_photo.pipe(fs.createWriteStream('./public'+path));
                 let venue = {
                     id: exists.result[0].id,
                     name: places_result.json.results[0].name,
                     place_id: places_result.json.results[0].place_id,
                     address: places_result.json.results[0].formatted_address,
-                    image: path,
                     price_level: places_result.json.results[0].price_level,
                     rating: places_result.json.results[0].rating,
                     lat: places_result.json.results[0].geometry.location.lat,
