@@ -15,8 +15,8 @@ class Map extends Component {
     this.apiKey = 'AIzaSyDgTT27dxGtMUKso84YXTvAV48x9923pO8';
     this.handleChange = this.handleChange.bind(this);
     this.handleZoomAnimationStart = this.handleZoomAnimationStart.bind(this);
-    this.handleZoomAnimationEnd =this.handleZoomAnimationEnd.bind(this);
-    this.customMapsAPICode =this.customMapsAPICode.bind(this);
+    this.handleZoomAnimationEnd = this.handleZoomAnimationEnd.bind(this);
+    this.customMapsAPICode = this.customMapsAPICode.bind(this);
   }
 
   componentDidMount() {

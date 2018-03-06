@@ -23,7 +23,6 @@ class App extends Component {
     // Get Cached events and settings
     let cached_allEvents = localStorage.getItem("allEvents");
     let cached_settings = localStorage.getItem("settings");
-    let cached_currentLocation = localStorage.getItem("currentLocation");
     let cached_window = localStorage.getItem("window");
 
     if (cached_allEvents) {
@@ -36,7 +35,6 @@ class App extends Component {
       this.props.setAllEvents(all_events);
     }
     if (cached_settings) this.props.setSettings(JSON.parse(cached_settings));
-    if (cached_currentLocation) this.props.setCurrentLocation(JSON.parse(cached_currentLocation));
     if (cached_window) this.props.setWindow(JSON.parse(cached_window));
     this.props.setLoading(true);
   }
@@ -102,8 +100,8 @@ class App extends Component {
               place_id: event.venue.place_id,
               image: event.venue.image,
               location: {
-                lat: event.venue.lat,
-                lng: event.venue.lng,
+                lat: parseFloat(event.venue.lat),
+                lng: parseFloat(event.venue.lng),
               }
             },
             organizers: [],
@@ -319,24 +317,29 @@ class App extends Component {
   }
 
   liveSearch(e) {
-    this.setState({ search: e.target.value });
-    let events = this.props.allEvents;
-    const options = {
-      shouldSort: true,
-      threshold: 0.6,
-      location: 0,
-      distance: 100,
-      maxPatternLength: 32,
-      minMatchCharLength: 1,
-      keys: [
-        "title",
-        "venue.name"
-    ]
-    };
-    const fuse = new Fuse(events, options);
-    let result = fuse.search(e.target.value);
-    this.props.setCurrentEvents(result);
-    this.props.calculateClusters(result, this.props.window.zoom);
+    try {
+      this.setState({ search: e.target.value });
+      let events = this.props.allEvents;
+      const options = {
+        shouldSort: true,
+        threshold: 0.4,
+        location: 0,
+        distance: 50,
+        maxPatternLength: 32,
+        minMatchCharLength: 2,
+        keys: [
+          "title",
+          "venue.name"
+      ]
+      };
+      const fuse = new Fuse(events, options);
+      let result = fuse.search(e.target.value || " ");
+      console.log(result.length);
+      this.props.setCurrentEvents(result);
+      this.props.calculateClusters(result, this.props.window.zoom);
+    } catch(err) {
+      console.log("SEARCH ERROR: ", err);
+    }
   }
 
   render() {
@@ -359,7 +362,7 @@ class App extends Component {
           <input type="text"
             className="form-control" 
             id="live-search" 
-            placeholder="Search for events, venues, genres..."
+            placeholder="Search for events, venues, artists..."
             value={this.state.search} 
             onChange={this.liveSearch.bind(this)}/>
         </div>
