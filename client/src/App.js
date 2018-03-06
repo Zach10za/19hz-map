@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import Fuse from 'fuse-js-latest';
 import Map from './components/Map.js';
 import MarkerModal from './components/MarkerModal.js';
 import LoadingScreen from './components/LoadingScreen.js';
@@ -9,6 +10,9 @@ class App extends Component {
 
   constructor() {
     super();
+    this.state = {
+      search: ''
+    }
     this.filter = this.filter.bind(this);
     this.filterDays = this.filterDays.bind(this);
     this.filterRadius = this.filterRadius.bind(this);
@@ -314,6 +318,27 @@ class App extends Component {
     this.filter();
   }
 
+  liveSearch(e) {
+    this.setState({ search: e.target.value });
+    let events = this.props.allEvents;
+    const options = {
+      shouldSort: true,
+      threshold: 0.6,
+      location: 0,
+      distance: 100,
+      maxPatternLength: 32,
+      minMatchCharLength: 1,
+      keys: [
+        "title",
+        "venue.name"
+    ]
+    };
+    const fuse = new Fuse(events, options);
+    let result = fuse.search(e.target.value);
+    this.props.setCurrentEvents(result);
+    this.props.calculateClusters(result, this.props.window.zoom);
+  }
+
   render() {
     let settings = this.props.settings;
     let changeDayFilter = this.changeDayFilter;
@@ -329,6 +354,15 @@ class App extends Component {
           {this.props.currentEvents.length} Events
         </div>
         <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
+
+        <div className="search-bar">
+          <input type="text"
+            className="form-control" 
+            id="live-search" 
+            placeholder="Search for events, venues, genres..."
+            value={this.state.search} 
+            onChange={this.liveSearch.bind(this)}/>
+        </div>
 
         <div id="settings" className={"settings-container" + (this.props.showSettings ? "" : " hide")}>
           <button className="btn btn-primary btn-settings"

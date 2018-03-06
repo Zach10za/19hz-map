@@ -45,6 +45,22 @@
   opacity: 0.05;
 }
 
+.search-bar {
+  position: absolute;
+  z-index: 999;
+  top: 20px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: 400px;
+}
+
+.search-bar input {
+  background: #FFF;
+  border: none;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
 .App.row {
   margin: 0;
 }
