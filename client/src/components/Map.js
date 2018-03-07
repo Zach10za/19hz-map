@@ -19,19 +19,6 @@ class Map extends Component {
     this.customMapsAPICode = this.customMapsAPICode.bind(this);
   }
 
-  componentDidMount() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        let currentLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        }
-        this.props.setCurrentLocation(currentLocation);
-        this.props.updateCircleCenter(currentLocation);
-      });
-    }
-  }
-
   handleChange(change) {
     this.props.setWindowCenter(change.center);
     if (this.props.window.zoom !== change.zoom) {
@@ -50,18 +37,26 @@ class Map extends Component {
   }
 
   customMapsAPICode(e) {
-    let map = e.map;
-    let maps = e.maps;
-    this.props.setMap(map);
-    let circle = new maps.Circle({
-      center: this.props.currentLocation || this.props.window.center,
-      map: map,
-      radius: 1609.3 * this.props.settings.radius,    // 10 miles in metres
-      fillColor: 'rgba(0,100,200,0.2)',
-      strokeColor: 'rgba(0,100,200,0.5)',
-      strokeWeight: 1
-    });
-    this.props.setCircle(circle);
+    this.props.setMap(e.map);
+    this.props.setMaps(e.maps);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        let currentLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        }
+        this.props.setCurrentLocation(currentLocation);
+        let circle = new this.props.maps.Circle({
+          center: currentLocation,
+          map: this.props.map,
+          radius: 1609.3 * this.props.settings.radius,
+          fillColor: 'rgba(0,100,200,0.2)',
+          strokeColor: 'rgba(0,100,200,0.5)',
+          strokeWeight: 1
+        });
+        this.props.setCircle(circle);
+      });
+    }
   }
 
   render() {
@@ -75,7 +70,7 @@ class Map extends Component {
         onChange={this.handleChange}
         onZoomAnimationStart={this.handleZoomAnimationStart}
         onZoomAnimationEnd={this.handleZoomAnimationEnd}
-        onChildClick={(i, marker) => this.props.setWindowCenter({lat: marker.lat, lng: marker.lng})}
+        onChildClick={(i, marker) => this.props.setWindowCenter({lat: parseFloat(marker.lat), lng: parseFloat(marker.lng)})}
         onGoogleApiLoaded={this.customMapsAPICode}
         yesIWantToUseGoogleMapApiInternals={true}>
 
@@ -103,6 +98,7 @@ const mapStateToProps = (state) => {
     currentLocation: state.currentLocation,
     window: state.window,
     map: state.map,
+    maps: state.maps,
     // window: {
     //   center: { lat: 34.0522, lng: -118.2437 },
     //   zoom: 10,
@@ -126,6 +122,7 @@ const mapDispatchToProps = (dispatch) => {
     setWindowZoom: (zoom) => dispatch(actions.setWindowZoom(zoom)),
     setWindowBounds: (bounds) => dispatch(actions.setWindowBounds(bounds)),
     setMap: (map) => dispatch(actions.setMap(map)),
+    setMaps: (maps) => dispatch(actions.setMaps(maps)),
     calculateClusters: (events, zoom) => dispatch(actions.calculateClusters(events, zoom)),
   };
 }

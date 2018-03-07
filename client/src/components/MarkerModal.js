@@ -52,12 +52,18 @@ class MarkerModal extends Component {
               <p className="mb-0">{event.venue.name}</p>
               <p className="mb-0">{event.time} | {new Date(event.date).toDateString()}</p>
             </div>
-{/*            <div className="mt-2">
-              {event.tags.map((tag) => {
-                let color = getTagColor(tag.id);
-                return (<div className="tag" style={{ backgroundColor: `rgba(${color[0]},${color[1]},${color[2]}, ${color[3]})` }} key={tag.id}>{tag.tag}</div>);
+            <div className="mt-2">
+              {event.tags.map((tag, i) => {
+                {/*let color = getTagColor(i);*/}
+                let color = [Math.floor(Math.random() * 255),Math.floor(Math.random() * 255),Math.floor(Math.random() * 255), Math.random() + 0.5];
+                return (<div className="tag" style={{ backgroundColor: `rgba(${color[0]},${color[1]},${color[2]}, ${color[3]})` }} key={i}>{tag}</div>);
               })}
-            </div>*/}
+              {event.organizers.map((organizer, i) => {
+                {/*let color = getTagColor(i);*/}
+                let color = [Math.floor(Math.random() * 255),Math.floor(Math.random() * 255),Math.floor(Math.random() * 255), Math.random() + 0.5];
+                return (<div className="tag" style={{ backgroundColor: `rgba(${color[0]},${color[1]},${color[2]}, ${color[3]})` }} key={i}>{organizer}</div>);
+              })}
+            </div>
           </a>)
       })
     } else if (this.state.modalGroupBy === 'venues') {
@@ -119,20 +125,20 @@ class MarkerModal extends Component {
   }
 
 
-  // getTagColor(id) {
-  //   const COLORS = [
-  //     [181,137,0],
-  //     [203,75,22],
-  //     [220,50,47],
-  //     [211,54,130],
-  //     [108,113,196],
-  //     [38,139,210],
-  //     [42,161,152],
-  //     [133,153,0],
-  //   ];
-  //   let opacity = (20 - Math.ceil(id / COLORS.length)) / 20;
-  //   return [...COLORS[id % COLORS.length], opacity];
-  // }
+  getTagColor(id) {
+    const COLORS = [
+      [181,137,0],
+      [203,75,22],
+      [220,50,47],
+      [211,54,130],
+      [108,113,196],
+      [38,139,210],
+      [42,161,152],
+      [133,153,0],
+    ];
+    let opacity = (20 - Math.ceil(id / COLORS.length)) / 20;
+    return [...COLORS[id % COLORS.length], opacity];
+  }
 }
 
 const mapStateToProps = (state) => {

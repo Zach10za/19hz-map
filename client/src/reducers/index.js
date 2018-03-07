@@ -19,7 +19,7 @@ const initialState = {
     eventsToLoad: 0,
   },
   isLoading: true,
-
+  maps: null,
   map: null,
   clusters: [],
   circle: null,
@@ -128,9 +128,10 @@ const rootReducer = (state = initialState, action) => {
     case 'UPDATE_CIRCLE_Center':
       circle = state.circle;
       circle.setCenter(action.payload.center);
+      console.log('setting circle center');
       return {
         ...state,
-        circle: circle,
+        circle,
       };
     case 'SET_CIRCLE':
       return {
@@ -194,6 +195,11 @@ const rootReducer = (state = initialState, action) => {
       return {
         ...state,
         map: action.payload.map
+      };
+    case 'SET_MAPS':
+      return {
+        ...state,
+        maps: action.payload.maps
       };
     case 'CALCULATE_CLUSTERS':
       return {

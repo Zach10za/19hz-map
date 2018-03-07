@@ -1,8 +1,45 @@
 var db = require('../db.js');
 
+// exports.all = function() {
+//     return new Promise((resolve, reject) => {
+//         db.get().query('SELECT * FROM events WHERE event_date >= CURDATE() ORDER BY event_date DESC', function(err, result) {
+//             if (err) return reject(err);
+//             return resolve({ success: true, count: result.length, result: result });
+//         });
+//     });
+// }
 exports.all = function() {
     return new Promise((resolve, reject) => {
-        db.get().query('SELECT * FROM events WHERE event_date >= CURDATE() ORDER BY event_date DESC', function(err, result) {
+        db.get().query(
+            `SELECT
+                events.*,
+                (
+                SELECT
+                    GROUP_CONCAT(tags.tag)
+                FROM
+                    event_tags
+                INNER JOIN
+                    tags ON tags.id=event_tags.tag_id
+                WHERE
+                    event_tags.event_id = events.id
+                ) AS tagsList,
+                (
+                SELECT
+                    GROUP_CONCAT(organizers.organizer)
+                FROM
+                    event_organizers
+                INNER JOIN
+                    organizers ON organizers.id=event_organizers.organizer_id
+                WHERE
+                    event_organizers.event_id = events.id
+                ) AS organizersList
+            FROM
+                events 
+            WHERE
+                event_date >= CURDATE() 
+            ORDER BY
+                event_date DESC`
+            , function(err, result) {
             if (err) return reject(err);
             return resolve({ success: true, count: result.length, result: result });
         });

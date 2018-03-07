@@ -136,6 +136,7 @@ export const updateCircleRadius = (radius) => {
 }
 
 export const updateCircleCenter = (center) => {
+      console.log('setting circle', center);
   return {
     type: 'UPDATE_CIRCLE_CENTER',
     payload:  {
@@ -212,6 +213,15 @@ export const setMap = (map) => {
     type: 'SET_MAP',
     payload:  {
       map
+    }
+  };
+}
+
+export const setMaps = (maps) => {
+  return {
+    type: 'SET_MAPS',
+    payload:  {
+      maps
     }
   };
 }

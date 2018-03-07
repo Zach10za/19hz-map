@@ -69,6 +69,7 @@ class App extends Component {
       this.props.setSettingsDateRange({ min: date, max: '' });
 
       let res = await this.getEvents();
+      console.log(res);
       let events = [];
 
       for (let i=0; i < res.result.length; i++) {
@@ -104,8 +105,8 @@ class App extends Component {
                 lng: parseFloat(event.venue.lng),
               }
             },
-            organizers: [],
-            tags: []
+            organizers: event.organizersList ? event.organizersList.split(',') : [],
+            tags: event.tagsList ? event.tagsList.split(',') : [],
           };
           events.push(ev);
         }
@@ -123,12 +124,6 @@ class App extends Component {
               eventsToLoad: deduped_events.length,
             })
           }, loadingTimeout);
-
-          // const organizers_res = await this.getOrganizers(deduped_events[i].id);
-          // deduped_events[i].organizers = organizers_res.result;
-
-          // const tags_res = await this.getTags(deduped_events[i].id);
-          // deduped_events[i].tags = tags_res.result;
         }
       }
 
@@ -154,7 +149,6 @@ class App extends Component {
     window.addEventListener('beforeunload', () => {
       localStorage.setItem("allEvents", JSON.stringify(this.props.allEvents));
       localStorage.setItem("settings", JSON.stringify(this.props.settings));
-      localStorage.setItem("currentLocation", JSON.stringify(this.props.currentLocation));
       localStorage.setItem("window", JSON.stringify(this.props.window));
     });
   }
@@ -171,25 +165,25 @@ class App extends Component {
     }
   };
 
-  getTags = async (id) => {
-    try {
-      const response = await fetch(`/api/events/${id}/tags`);
-      const body = await response.json();
-      return body;
-    } catch(err) {
-      return err;
-    }
-  };
+  // getTags = async (id) => {
+  //   try {
+  //     const response = await fetch(`/api/events/${id}/tags`);
+  //     const body = await response.json();
+  //     return body;
+  //   } catch(err) {
+  //     return err;
+  //   }
+  // };
 
-  getOrganizers = async (id) => {
-    try {
-      const response = await fetch(`/api/events/${id}/organizers`);
-      const body = await response.json();
-      return body;
-    } catch(err) {
-      return err;
-    }
-  };
+  // getOrganizers = async (id) => {
+  //   try {
+  //     const response = await fetch(`/api/events/${id}/organizers`);
+  //     const body = await response.json();
+  //     return body;
+  //   } catch(err) {
+  //     return err;
+  //   }
+  // };
 
   scrapeEvents = async () => {
     try {
@@ -218,9 +212,9 @@ class App extends Component {
     this.filter();
   }
 
-  filter = async () => {
+  filter = async (events = null) => {
     try {
-      let events = await this.filterDateRange();
+      events = await this.filterDateRange(events);
       events = await this.filterDays(events);
       events = await this.filterRadius(events);
       this.props.setCurrentEvents(events);
@@ -271,7 +265,7 @@ class App extends Component {
     let location = this.props.currentLocation || this.props.window.center;
     let radius_filter = this.props.settings.radius;
     all_events = all_events || this.props.allEvents;
-    if (radius_filter > 0) {
+    if (radius_filter > 0 && this.props.circle) {
       console.log(radius_filter);
       let events = [];
       for (let i=0; i < all_events.length; i++) {
@@ -329,14 +323,16 @@ class App extends Component {
         minMatchCharLength: 2,
         keys: [
           "title",
-          "venue.name"
+          "venue.name",
+          "tags",
+          "organizers",
       ]
       };
       const fuse = new Fuse(events, options);
       let result = fuse.search(e.target.value || " ");
-      console.log(result.length);
-      this.props.setCurrentEvents(result);
-      this.props.calculateClusters(result, this.props.window.zoom);
+      this.filter(result);
+      // this.props.setCurrentEvents(result);
+      // this.props.calculateClusters(result, this.props.window.zoom);
     } catch(err) {
       console.log("SEARCH ERROR: ", err);
     }
@@ -359,7 +355,7 @@ class App extends Component {
         <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
 
         <div className="search-bar">
-          <input type="text"
+          <input type="search"
             className="form-control" 
             id="live-search" 
             placeholder="Search for events, venues, artists..."
