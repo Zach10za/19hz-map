@@ -11,6 +11,7 @@ const initialState = {
     },
     days: [0,1,2,3,4,5,6],
     radius: -1,
+    rating: 0,
   },
   showSettings: false,
   loadingMessage: {
@@ -106,6 +107,14 @@ const rootReducer = (state = initialState, action) => {
         settings: {
           ...state.settings,
           radius: action.payload.radius,
+        }
+      };
+    case 'SET_SETTINGS_RATING':
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          rating: action.payload.rating,
         }
       };
     case 'SET_CLUSTERS':

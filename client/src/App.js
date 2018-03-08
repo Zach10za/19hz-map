@@ -16,6 +16,8 @@ class App extends Component {
     this.filter = this.filter.bind(this);
     this.filterDays = this.filterDays.bind(this);
     this.filterRadius = this.filterRadius.bind(this);
+    this.filterRating = this.filterRating.bind(this);
+    this.filterSearch = this.filterSearch.bind(this);
     this.changeDayFilter = this.changeDayFilter.bind(this);
   }
 
@@ -69,14 +71,12 @@ class App extends Component {
       this.props.setSettingsDateRange({ min: date, max: '' });
 
       let res = await this.getEvents();
-      console.log(res);
       let events = [];
 
       for (let i=0; i < res.result.length; i++) {
 
         let event = res.result[i];
         if(event.venue.lat && event.venue.lng) {
-      
           setTimeout(() => {
             this.props.setLoadingMessage({
               message: 'Getting stored events',
@@ -95,11 +95,14 @@ class App extends Component {
             time: event.time,
             price: event.price,
             age: event.age,
+            link: event.link,
+            facebook: event.facebook,
             venue: {
               name: event.venue.name,
               address: event.venue.address,
               place_id: event.venue.place_id,
-              image: event.venue.image,
+              price: event.venue.price_level,
+              rating: event.venue.rating,
               location: {
                 lat: parseFloat(event.venue.lat),
                 lng: parseFloat(event.venue.lng),
@@ -165,26 +168,6 @@ class App extends Component {
     }
   };
 
-  // getTags = async (id) => {
-  //   try {
-  //     const response = await fetch(`/api/events/${id}/tags`);
-  //     const body = await response.json();
-  //     return body;
-  //   } catch(err) {
-  //     return err;
-  //   }
-  // };
-
-  // getOrganizers = async (id) => {
-  //   try {
-  //     const response = await fetch(`/api/events/${id}/organizers`);
-  //     const body = await response.json();
-  //     return body;
-  //   } catch(err) {
-  //     return err;
-  //   }
-  // };
-
   scrapeEvents = async () => {
     try {
       if (prompt("Enter secret to continue.") === '19hz') {
@@ -217,6 +200,14 @@ class App extends Component {
       events = await this.filterDateRange(events);
       events = await this.filterDays(events);
       events = await this.filterRadius(events);
+      events = await this.filterRating(events);
+      events = await this.filterSearch(events);
+      events.sort(function(a, b) {
+        a = new Date(a.date);
+        b = new Date(b.date);
+        return a>b ? -1 : a < b ? 1 : 0;
+      });
+
       this.props.setCurrentEvents(events);
       this.props.calculateClusters(this.props.currentEvents, this.props.window.zoom);
     } catch(err) {
@@ -229,12 +220,18 @@ class App extends Component {
     all_events = all_events || this.props.allEvents;
     let events = [];
 
+    let min_split = date_range_filter.min.split('-');
+    let max_split = date_range_filter.max.split('-');
+
+    let min_date = date_range_filter.min ? new Date(parseInt(min_split[0], 10), parseInt(min_split[1], 10)-1, parseInt(min_split[2], 10)) : new Date(Date.now());
+    let max_date = date_range_filter.max ? new Date(parseInt(max_split[0], 10), parseInt(max_split[1], 10)-1, parseInt(max_split[2], 10)) : null;
+
+    console.log(date_range_filter.min, min_date);
+    console.log(date_range_filter.max, max_date);
+
+
     for (let i=0; i < all_events.length; i++) {
       let event_date = new Date(all_events[i].date);
-
-      let tzoffset = (new Date()).getTimezoneOffset() * 60000;
-      let min_date = date_range_filter.min ? new Date(date_range_filter.min) : new Date(Date.now() - tzoffset);
-      let max_date = date_range_filter.max ? new Date(date_range_filter.max) : null;
 
       if (event_date >= min_date && (event_date <= max_date || !max_date) ) {
         events.push(all_events[i]);
@@ -299,6 +296,50 @@ class App extends Component {
     return R * C;
   }
 
+  filterRating(all_events = null) {
+    let rating = this.props.settings.rating;
+    all_events = all_events || this.props.allEvents;
+    if (rating > 0) {
+      console.log(rating);
+      let events = [];
+      for (let i=0; i < all_events.length; i++) {
+        if (all_events[i].venue.rating >= rating) {
+          events.push(all_events[i]);
+        }
+      }
+      return events;
+    } else {
+      return all_events;
+    }
+  }
+
+  filterSearch(all_events = null) {
+    all_events = all_events || this.props.allEvents;
+    if (this.state.search) {
+      const options = {
+        shouldSort: true,
+        threshold: 0.4,
+        location: 0,
+        distance: 50,
+        maxPatternLength: 32,
+        minMatchCharLength: 2,
+        keys: [
+          "title",
+          "venue.name",
+          "tags",
+          "organizers",
+          "age",
+          "price",
+        ]
+      };
+      const fuse = new Fuse(all_events, options);
+      let result = fuse.search(this.state.search || " ");
+      return result;
+    } else {
+      return all_events;
+    }
+  }
+
   handleDateRangeChange(e) {
     let dateRange = this.props.settings.dateRange;
     if (e.target.id === 'min-date') {
@@ -313,26 +354,7 @@ class App extends Component {
   liveSearch(e) {
     try {
       this.setState({ search: e.target.value });
-      let events = this.props.allEvents;
-      const options = {
-        shouldSort: true,
-        threshold: 0.4,
-        location: 0,
-        distance: 50,
-        maxPatternLength: 32,
-        minMatchCharLength: 2,
-        keys: [
-          "title",
-          "venue.name",
-          "tags",
-          "organizers",
-      ]
-      };
-      const fuse = new Fuse(events, options);
-      let result = fuse.search(e.target.value || " ");
-      this.filter(result);
-      // this.props.setCurrentEvents(result);
-      // this.props.calculateClusters(result, this.props.window.zoom);
+      this.filter();
     } catch(err) {
       console.log("SEARCH ERROR: ", err);
     }
@@ -409,14 +431,14 @@ class App extends Component {
           <div className="row mb-5">
             <div className="col-md-12">
               <div className="d-flex w-100  justify-content-between">
-                <h4>Location Radius</h4>
+                <h4 style={{ opacity: this.props.settings.radius > 0 ? '1' : '0.5' }}>Location Radius</h4>
                 <button className="btn btn-primary btn-circle" data-toggle="button" aria-pressed={this.props.settings.radius > 0}
                   onClick={() => {this.props.setSettingsRadius(this.props.settings.radius > 0 ? -1 : 50); this.filter()}} >
-                  { this.props.settings.radius > 0 ? 'Hide' : 'Show'}
+                  { this.props.settings.radius > 0 ? 'Disable' : 'Enable'}
                 </button>
               </div>
               <small className="text-muted mb-1" style={{ opacity: this.props.settings.radius > 0 ? '1' : '0' }}>({settings.radius} miles)</small>
-              <div className="input-group radius-range">
+              <div className="input-group radius-range" style={{ opacity: this.props.settings.radius > 0 ? '1' : '0.5' }}>
                 <input
                   type="range"
                   className="form-control"
@@ -431,6 +453,34 @@ class App extends Component {
               </div>
             </div>
           </div>
+
+          <div className="row mb-5">
+            <div className="col-md-12">
+              <div className="d-flex w-100  justify-content-between">
+                <h4 style={{ opacity: this.props.settings.rating > 0 ? '1' : '0.5' }}>Venue Rating</h4>
+                <button className="btn btn-primary btn-circle" data-toggle="button" aria-pressed={this.props.settings.radius > 0}
+                  onClick={() => {this.props.setSettingsRating(this.props.settings.rating > 0 ? -1 : 2.5); this.filter()}} >
+                  { this.props.settings.rating > 0 ? 'Disable' : 'Enable'}
+                </button>
+              </div>
+              <small className="text-muted mb-1" style={{ opacity: this.props.settings.rating > 0 ? '1' : '0' }}>({settings.rating})</small>
+              <div className="input-group rating-range" style={{ opacity: this.props.settings.rating > 0 ? '1' : '0.5' }}>
+                <input
+                  type="range"
+                  className="form-control"
+                  min="0.1"
+                  max="5"
+                  step="0.1"
+                  onChange={(e) => {this.props.setSettingsRating(e.target.value); this.filter()}}
+                  disabled={this.props.settings.rating < 0}
+                  value={settings.rating}
+                  aria-label="Rating"
+                  aria-describedby="rating-input" />
+              </div>
+            </div>
+          </div>
+
+
         </div>
 
         <div className="map-container">
@@ -459,6 +509,7 @@ const mapDispatchToProps = (dispatch) => {
     setSettingsDateRange: (dateRange) => dispatch(actions.setSettingsDateRange(dateRange)),
     setSettingsDays: (days) => dispatch(actions.setSettingsDays(days)),
     setSettingsRadius: (radius) => dispatch(actions.setSettingsRadius(radius)),
+    setSettingsRating: (rating) => dispatch(actions.setSettingsRating(rating)),
     updateCircleRadius: (radius) => dispatch(actions.updateCircleRadius(radius)),
     updateCircleCenter: (center) => dispatch(actions.updateCircleCenter(center)),
     calculateClusters: (events, zoom) => dispatch(actions.calculateClusters(events, zoom)),

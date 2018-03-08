@@ -4,3 +4,5 @@ client/node_modules
 
 db.js
 client/.env.development
+
+start_prod.json

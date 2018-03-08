@@ -29,7 +29,7 @@ exports.create = function(organizer) {
 
 exports.findByName = function(name) {
     return new Promise((resolve, reject) => {
-        db.get().query('SELECT * FROM organizers WHERE organizer = ?', name, function(err, result) {
+        db.get().query('SELECT * FROM organizers WHERE LOWER(organizer) = LOWER(?)', name, function(err, result) {
             if (err) return reject(err);
             return resolve({ success: true, result: result });
         });
@@ -38,7 +38,7 @@ exports.findByName = function(name) {
 
 exports.findOrCreate = function(name) {
     return new Promise((resolve, reject) => {
-        db.get().query('SELECT * FROM organizers WHERE organizer = ?', name, function(err, result) {
+        db.get().query('SELECT * FROM organizers WHERE LOWER(organizer) = LOWER(?)', name, function(err, result) {
             if (err) return reject(err);
             if (result.length > 0) {
                 console.log("Found existing organizer");

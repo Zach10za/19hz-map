@@ -108,6 +108,15 @@ export const setSettingsRadius = (radius) => {
   };
 }
 
+export const setSettingsRating = (rating) => {
+  return {
+    type: 'SET_SETTINGS_RATING',
+    payload:  {
+      rating, // float
+    }
+  };
+}
+
 export const setClusters = (clusters) => {
   return {
     type: 'SET_CLUSTERS',

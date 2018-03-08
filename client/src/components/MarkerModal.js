@@ -35,18 +35,21 @@ class MarkerModal extends Component {
   }
 
   handleVenueClick(e) {
-    let venueList = e.target.parentNode.getElementsByClassName('venue-events-list')[0];
-    venueList.classList.toggle('collapsed');
+    try {
+      let venueList = e.target.parentNode.getElementsByClassName('venue-events-list')[0];
+      venueList.classList.toggle('collapsed');
+    } catch(err) {
+      console.error("EVENT ERR:", err);
+    }
   }
 
   render() {
     let events = [];
     const handleVenueClick = this.handleVenueClick;
-    // const getTagColor = this.getTagColor;
     if (this.state.modalGroupBy === 'events') {
       events = this.props.modalEvents.map((event, i) => {
         return (
-          <a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>
+          <a className="list-group-item list-group-item-action flex-column align-items-start" target="_blank" href={event.link} key={event.id}>
             <h5 className="mb-1">{event.title}</h5>
             <div className="d-flex w-100  justify-content-between">
               <p className="mb-0">{event.venue.name}</p>
@@ -54,37 +57,38 @@ class MarkerModal extends Component {
             </div>
             <div className="mt-2">
               {event.tags.map((tag, i) => {
-                {/*let color = getTagColor(i);*/}
-                let color = [Math.floor(Math.random() * 255),Math.floor(Math.random() * 255),Math.floor(Math.random() * 255), Math.random() + 0.5];
-                return (<div className="tag" style={{ backgroundColor: `rgba(${color[0]},${color[1]},${color[2]}, ${color[3]})` }} key={i}>{tag}</div>);
+                return (<div className="tag" style={{ backgroundColor: '#2364ce' }} key={i}>{tag}</div>);
               })}
               {event.organizers.map((organizer, i) => {
-                {/*let color = getTagColor(i);*/}
-                let color = [Math.floor(Math.random() * 255),Math.floor(Math.random() * 255),Math.floor(Math.random() * 255), Math.random() + 0.5];
-                return (<div className="tag" style={{ backgroundColor: `rgba(${color[0]},${color[1]},${color[2]}, ${color[3]})` }} key={i}>{organizer}</div>);
-              })}
+                return (<div className="tag" style={{ backgroundColor: '#00a9ff' }} key={i}>{organizer}</div>);})}
             </div>
           </a>)
       })
     } else if (this.state.modalGroupBy === 'venues') {
       events = this.sortByVenue(this.props.modalEvents).map((venue, i) => {
+        let price = '';
+        if (venue.price) for (let x=0; x < venue.price; x++) price += '$';
         return (
           <div className="list-group-item list-group-item-action flex-column align-items-start" onClick={(e) => handleVenueClick(e)} key={i}>
-            <h5 className="mb-1">{venue.name}</h5>
+            <div className="d-flex w-100 justify-content-between">
+              <h5 className="mb-1">{venue.name}<small className="text-muted">{ price ? ` (${price})` : ''}</small></h5>
+              <p className="mb-1">{venue.rating}</p>
+            </div>
             <div className="list-group venue-events-list collapsed">
               {venue.events.map((event, j) => {
-                return (<a className="list-group-item list-group-item-action flex-column align-items-start" href="#/" key={event.id}>
+                return (<a className="list-group-item list-group-item-action flex-column align-items-start" target="_blank" href={event.link} onClick={(e) => e.stopPropagation()} key={event.id}>
                   <h5 className="mb-1">{event.title}</h5>
-                  <div className="d-flex w-100  justify-content-between">
+                  <div className="d-flex w-100 justify-content-between">
                     <p className="mb-0">{event.venue.name}</p>
                     <p className="mb-0">{event.time} | {new Date(event.date).toDateString()}</p>
                   </div>
-      {/*            <div className="mt-2">
-                    {event.tags.map((tag) => {
-                      let color = getTagColor(tag.id);
-                      return (<div className="tag" style={{ backgroundColor: `rgba(${color[0]},${color[1]},${color[2]}, ${color[3]})` }} key={tag.id}>{tag.tag}</div>);
+                  <div className="mt-2">
+                    {event.tags.map((tag, i) => {
+                      return (<div className="tag" style={{ backgroundColor: '#2364ce' }} key={i}>{tag}</div>);
                     })}
-                  </div>*/}
+                    {event.organizers.map((organizer, i) => {
+                      return (<div className="tag" style={{ backgroundColor: '#00a9ff' }} key={i}>{organizer}</div>);})}
+                  </div>
                 </a>)
               })}
             </div>
@@ -122,22 +126,6 @@ class MarkerModal extends Component {
         </div>
       </div>
     );
-  }
-
-
-  getTagColor(id) {
-    const COLORS = [
-      [181,137,0],
-      [203,75,22],
-      [220,50,47],
-      [211,54,130],
-      [108,113,196],
-      [38,139,210],
-      [42,161,152],
-      [133,153,0],
-    ];
-    let opacity = (20 - Math.ceil(id / COLORS.length)) / 20;
-    return [...COLORS[id % COLORS.length], opacity];
   }
 }
 

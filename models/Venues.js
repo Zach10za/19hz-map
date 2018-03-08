@@ -44,7 +44,7 @@ exports.findByName = function(name) {
 
 exports.findOrCreate = function(name) {
     return new Promise((resolve, reject) => {
-        db.get().query('SELECT * FROM venues WHERE raw_name = ?', name, function(err, result) {
+        db.get().query('SELECT * FROM venues WHERE LOWER(raw_name) = LOWER(?)', name, function(err, result) {
             if (err) return reject(err);
             if (result.length > 0) {
                 console.log("Venue found");
@@ -65,7 +65,7 @@ exports.findOrCreate = function(name) {
 
 exports.storePreciseInfo = function(venue) {
     return new Promise((resolve, reject) => {
-        db.get().query('UPDATE venues SET name=?, place_id=?, address=?, image=?, price_level=?, rating=?, lat=?, lng=?  WHERE id = ?', [venue.name, venue.place_id, venue.address, venue.image, venue.price_level, venue.rating, venue.lat, venue.lng, venue.id], function(err, result) {
+        db.get().query('UPDATE venues SET name=?, place_id=?, address=?, price_level=?, rating=?, lat=?, lng=?  WHERE id = ?', [venue.name, venue.place_id, venue.address, venue.price_level, venue.rating, venue.lat, venue.lng, venue.id], function(err, result) {
             if (err) return reject(err);
             return resolve({success: true, result: result});
         });
@@ -82,30 +82,27 @@ exports.getAndStorePreciseLocation = async (location_id) => {
             } else {
                 console.log("Venue found. Getting precise location for: " + exists.result[0].raw_name);
                 const places_result = await googleMaps.places({query: exists.result[0].raw_name, language: 'en'}).asPromise();
-                if (places_result.status === 200) console.log("Precise location found. Now getting picture with reference: " + places_result.json.results[0].photos[0].photo_reference);
-                const places_photo = await googleMaps.placesPhoto({maxwidth: 600, photoreference: places_result.json.results[0].photos[0].photo_reference}).asPromise();
-                console.log("Found photo");
-                let filename = Date.now() + '.jpg';
-                let path = '/img/' + filename;
-                places_photo.pipe(fs.createWriteStream('./public/images/'+ filename));
-                let venue = {
-                    id: exists.result[0].id,
-                    name: places_result.json.results[0].name,
-                    place_id: places_result.json.results[0].place_id,
-                    address: places_result.json.results[0].formatted_address,
-                    image: path,
-                    price_level: places_result.json.results[0].price_level,
-                    rating: places_result.json.results[0].rating,
-                    lat: places_result.json.results[0].geometry.location.lat,
-                    lng: places_result.json.results[0].geometry.location.lng,
-                };
-                const venue_result = await exports.storePreciseInfo(venue);
-                console.log("Precise Location stored");
+                if (places_result.status === 200) {
+                    let venue = {
+                        id: exists.result[0].id,
+                        name: places_result.json.results[0].name,
+                        place_id: places_result.json.results[0].place_id,
+                        address: places_result.json.results[0].formatted_address,
+                        price_level: places_result.json.results[0].price_level,
+                        rating: places_result.json.results[0].rating,
+                        lat: places_result.json.results[0].geometry.location.lat,
+                        lng: places_result.json.results[0].geometry.location.lng,
+                    };
+                    const venue_result = await exports.storePreciseInfo(venue);
+                } else {
+                    console.log('Could not get precise location');
+                }
             }
         } else {
             console.log( "Venue does not exist" );
         }
     } catch(err) {
+        console.error('SCRAPE ERR:', err);
         return err;
     }
 }

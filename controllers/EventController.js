@@ -5,35 +5,6 @@ const Venue = require('../models/Venues.js');
 const Organizer = require('../models/Organizers.js');
 const Tag = require('../models/Tags.js');
 
-
-// exports.index = async (req, res) => {
-//     try {
-//         const events_result = await Event.all();
-//         let events = events_result.result;
-//         for (let i=0; i<events.length; i++) {
-
-//             const venue = await Venue.findById(events[i].location);
-//             events[i].venue = venue.result[0];
-
-//             const organizers_result = await Event.getOrganizers(events[i].id);
-//             events[i].organizers = [];
-//             for (let j=0; j<organizers_result.result.length; j++) {
-//                 events[i].organizers.push(organizers_result.result[j].organizer);
-//             }
-
-//             const tags_result = await Event.getTags(events[i].id);
-//             events[i].tags = [];
-//             for (let j=0; j<tags_result.result.length; j++) {
-//                 events[i].tags.push(tags_result.result[j].tag);
-//             }
-
-//         }
-//         return res.render('index', { title: "19hz | Events", events });
-//     } catch(err) {
-//         return err;
-//     }
-// }
-
 exports.index = async (req, res) => {
     console.log("Calling EventController.index");
     try {
@@ -116,7 +87,8 @@ exports.scrapeEvents = function(req, res) {
                     age: null,
                     price: null,
                     organizers: [],
-                    link: [],
+                    link: null,
+                    facebook: null
                 };
                 $(row).find('td').map(function(i, cell) {
                     let text = $(cell).text();
@@ -128,6 +100,7 @@ exports.scrapeEvents = function(req, res) {
                                 raw['time'] = time ? (time.includes(')') ? time.split(')')[0] : time) : '';
                                 break;
                             case 1:
+                                raw['link'] = $(cell).find('a').attr('href');
                                 raw['title'] = text.split(' @ ')[0];
                                 raw['location'] = text.split(' @ ')[1];
                                 break;
@@ -152,10 +125,7 @@ exports.scrapeEvents = function(req, res) {
                                 raw['organizers'] = text.split(', ');
                                 break;
                             case 5:
-                                raw['link'] = {
-                                    title: text,
-                                    href: $(cell).find('a').attr('href')
-                                }
+                                raw['facebook'] = $(cell).find('a').attr('href');
                                 break;
                             case 6:
                                 raw['date'] = text;
@@ -172,8 +142,7 @@ exports.scrapeEvents = function(req, res) {
 }
 
 const processBatch = async (raw_events) => {
-    console.log('proccessing batch');
-    console.log(raw_events);
+    console.log('Looking for new events');
     try {
         let events_added = 0;
         for (let i=0; i<raw_events.length; i++) {
@@ -189,18 +158,14 @@ const processBatch = async (raw_events) => {
                     location: raw_event.location,
                     age: raw_event.age,
                     price: raw_event.price,
-                    link: raw_event.link ? raw_event.link.href : null,
+                    link: raw_event.link,
+                    facebook: raw_event.facebook,
                 }
-
-                console.log("Finding/Creating Venue");
                 const venue = await Venue.findOrCreate(new_event.location);
                 if (venue.success) new_event.location = venue.result[0].id;
                 const precise_location = Venue.getAndStorePreciseLocation(new_event.location);
 
                 const create_event = await Event.create(new_event);
-                console.log("New event created");
-                console.log(raw_event);
-                console.log(new_event);
                 new_event['id'] = create_event.id;
 
                 for (let j=0; j<raw_event.organizers.length; j++) {
@@ -214,16 +179,13 @@ const processBatch = async (raw_events) => {
                     let tag = await Tag.findOrCreate(raw_event.tags[j]);
                     let tag_link = await Tag.linkToEvent(new_event.id, tag.result[0].id);
                 }
-
-                console.log('Event Added');
                 events_added++;
-            } else {
-                console.log('Event already exists');
             }
         }
-        console.log('done');
+        console.log('Found ' + events_added + ' new events');
         return { success: true, new_events: events_added };
     } catch(err) {
+        console.error('PROCESS ERR:', err);
         return err;
     }
 }

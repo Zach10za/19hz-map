@@ -29,7 +29,7 @@ exports.create = function(tag) {
 
 exports.findByName = function(name) {
     return new Promise((resolve, reject) => {
-        db.get().query('SELECT * FROM tags WHERE tag = ?', name, function(err, result) {
+        db.get().query('SELECT * FROM tags WHERE LOWER(tag) = LOWER(?)', name, function(err, result) {
             if (err) return reject(err);
             return resolve({ success: true, result: result });
         });
@@ -38,7 +38,7 @@ exports.findByName = function(name) {
 
 exports.findOrCreate = function(name) {
     return new Promise((resolve, reject) => {
-        db.get().query('SELECT * FROM tags WHERE tag = ?', name, function(err, result) {
+        db.get().query('SELECT * FROM tags WHERE LOWER(tag) = LOWER(?)', name, function(err, result) {
             if (err) return reject(err);
             if (result.length > 0) {
                 return resolve({ success: true, result: result });
