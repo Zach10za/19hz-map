@@ -23,21 +23,21 @@ class App extends Component {
 
   componentWillMount() {
     // Get Cached events and settings
-    let cached_allEvents = localStorage.getItem("allEvents");
-    let cached_settings = localStorage.getItem("settings");
-    let cached_window = localStorage.getItem("window");
+    // let cached_allEvents = localStorage.getItem("allEvents");
+    // let cached_settings = localStorage.getItem("settings");
+    // let cached_window = localStorage.getItem("window");
 
-    if (cached_allEvents) {
-      let tzoffset = (new Date()).getTimezoneOffset() * 60000;
-      let cur_date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
-      let all_events = JSON.parse(cached_allEvents);
-      all_events = all_events.filter((event, i) => {
-        return event.date >= cur_date;
-      });
-      this.props.setAllEvents(all_events);
-    }
-    if (cached_settings) this.props.setSettings(JSON.parse(cached_settings));
-    if (cached_window) this.props.setWindow(JSON.parse(cached_window));
+    // if (cached_allEvents) {
+    //   let tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    //   let cur_date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
+    //   let all_events = JSON.parse(cached_allEvents);
+    //   all_events = all_events.filter((event, i) => {
+    //     return event.date >= cur_date;
+    //   });
+    //   this.props.setAllEvents(all_events);
+    // }
+    // if (cached_settings) this.props.setSettings(JSON.parse(cached_settings));
+    // if (cached_window) this.props.setWindow(JSON.parse(cached_window));
     this.props.setLoading(true);
   }
 
@@ -149,11 +149,11 @@ class App extends Component {
       console.log("APP_DID_MOUNT ERROR: ", err);
     }
 
-    window.addEventListener('beforeunload', () => {
-      localStorage.setItem("allEvents", JSON.stringify(this.props.allEvents));
-      localStorage.setItem("settings", JSON.stringify(this.props.settings));
-      localStorage.setItem("window", JSON.stringify(this.props.window));
-    });
+    // window.addEventListener('beforeunload', () => {
+    //   localStorage.setItem("allEvents", JSON.stringify(this.props.allEvents));
+    //   localStorage.setItem("settings", JSON.stringify(this.props.settings));
+    //   localStorage.setItem("window", JSON.stringify(this.props.window));
+    // });
   }
 
   getEvents = async () => {
@@ -369,6 +369,7 @@ class App extends Component {
     }
     return (
       <div className="App row app-row">
+      <div className="overlay">
         {loading}
         <MarkerModal events={this.props.modalEvents} />
         <div className="events-counter">
@@ -483,6 +484,7 @@ class App extends Component {
 
         </div>
 
+        </div>
         <div className="map-container">
           <Map ref="gmap" />
         </div>

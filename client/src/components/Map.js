@@ -12,7 +12,7 @@ class Map extends Component {
 
   constructor(props) {
     super(props);
-    this.apiKey = 'AIzaSyDgTT27dxGtMUKso84YXTvAV48x9923pO8';
+    this.apiKey = 'AIzaSyDgTT27dxGtMUKso84YXTvAV48x9923pO8&v=3.31';
     this.handleChange = this.handleChange.bind(this);
     this.handleZoomAnimationStart = this.handleZoomAnimationStart.bind(this);
     this.handleZoomAnimationEnd = this.handleZoomAnimationEnd.bind(this);
@@ -67,6 +67,7 @@ class Map extends Component {
         zoom={this.props.window.zoom || 10}
         center={this.props.window.center}
         resetBoundsOnResize={true}
+        gestureHandling='greedy'
         onChange={this.handleChange}
         onZoomAnimationStart={this.handleZoomAnimationStart}
         onZoomAnimationEnd={this.handleZoomAnimationEnd}
