@@ -99,6 +99,15 @@ export const setSettingsDays = (days) => {
   };
 }
 
+export const setSettingsRegion = (region) => {
+  return {
+    type: 'SET_SETTINGS_REGION',
+    payload:  {
+      region, // int
+    }
+  };
+}
+
 export const setSettingsRadius = (radius) => {
   return {
     type: 'SET_SETTINGS_RADIUS',

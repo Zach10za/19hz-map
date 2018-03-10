@@ -8,7 +8,7 @@ const TagController = require('../controllers/TagController.js');
 const VenueController = require('../controllers/VenueController.js');
 
 // Scrape events from 19hz.info
-router.get('/api/scrape', EventController.scrapeEvents);
+router.get('/api/scrape/:region', EventController.scrapeEvents);
 
 // API calls for events
 router.get('/api/events', EventController.index);

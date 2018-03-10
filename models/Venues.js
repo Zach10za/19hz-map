@@ -35,7 +35,7 @@ exports.create = function(venue) {
 
 exports.findByName = function(name) {
     return new Promise((resolve, reject) => {
-        db.get().query('SELECT * FROM venues WHERE raw_name = ?', name, function(err, result) {
+        db.get().query('SELECT * FROM venues WHERE LOWER(raw_name) = LOWER(?)', name, function(err, result) {
             if (err) return reject(err);
             return resolve({ success: true, result: result });
         });
@@ -82,7 +82,7 @@ exports.getAndStorePreciseLocation = async (location_id) => {
             } else {
                 console.log("Venue found. Getting precise location for: " + exists.result[0].raw_name);
                 const places_result = await googleMaps.places({query: exists.result[0].raw_name, language: 'en'}).asPromise();
-                if (places_result.status === 200) {
+                if (places_result.status === 200 && places_result.json.results[0].name) {
                     let venue = {
                         id: exists.result[0].id,
                         name: places_result.json.results[0].name,

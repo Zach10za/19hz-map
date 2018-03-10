@@ -10,6 +10,7 @@ const initialState = {
       max: '',
     },
     days: [0,1,2,3,4,5,6],
+    region: 2,
     radius: -1,
     rating: 0,
   },
@@ -96,6 +97,14 @@ const rootReducer = (state = initialState, action) => {
         settings: {
           ...state.settings,
           days: action.payload.days,
+        }
+      };
+    case 'SET_SETTINGS_REGION':
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          region: action.payload.region,
         }
       };
     case 'SET_SETTINGS_RADIUS':

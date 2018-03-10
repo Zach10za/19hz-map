@@ -74,7 +74,34 @@ exports.findByVenue = async (req, res) => {
 
 exports.scrapeEvents = function(req, res) {
     events = [];
-    request('https://19hz.info/eventlisting_LosAngeles.php', function(error, response, html) {
+    console.log(req.params.region);
+    let region = req.params.region;
+    let link = 'https://19hz.info/eventlisting_LosAngeles.php';
+    switch(region) {
+        case '1':
+            link = 'https://19hz.info/eventlisting_BayArea.php';
+            break;
+        case '2':
+            link = 'https://19hz.info/eventlisting_LosAngeles.php';
+            break;
+        case '3':
+            link = 'https://19hz.info/eventlisting_Atlanta.php';
+            break;
+        case '4':
+            link = 'https://19hz.info/eventlisting_Texas.php';
+            break;
+        case '5':
+            link = 'https://19hz.info/eventlisting_Miami.php';
+            break;
+        case '6':
+            link = 'https://19hz.info/eventlisting_Phoenix.php';
+            break;
+        case '7':
+            link = 'https://19hz.info/eventlisting_Massachusetts.php';
+            break;
+    }
+    console.log(link);
+    request(link, function(error, response, html) {
         if (!error && response.statusCode == 200) {
             const $ = cheerio.load(html);
             $('table:first-of-type tbody').find('tr').map(function (index, row) {
@@ -88,7 +115,8 @@ exports.scrapeEvents = function(req, res) {
                     price: null,
                     organizers: [],
                     link: null,
-                    facebook: null
+                    facebook: null,
+                    region: region,
                 };
                 $(row).find('td').map(function(i, cell) {
                     let text = $(cell).text();
@@ -160,6 +188,7 @@ const processBatch = async (raw_events) => {
                     price: raw_event.price,
                     link: raw_event.link,
                     facebook: raw_event.facebook,
+                    region: raw_event.region,
                 }
                 const venue = await Venue.findOrCreate(new_event.location);
                 if (venue.success) new_event.location = venue.result[0].id;

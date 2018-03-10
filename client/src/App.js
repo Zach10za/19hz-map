@@ -14,6 +14,7 @@ class App extends Component {
       search: ''
     }
     this.filter = this.filter.bind(this);
+    this.filterRegion = this.filterRegion.bind(this);
     this.filterDays = this.filterDays.bind(this);
     this.filterRadius = this.filterRadius.bind(this);
     this.filterRating = this.filterRating.bind(this);
@@ -74,7 +75,7 @@ class App extends Component {
       let events = [];
 
       for (let i=0; i < res.result.length; i++) {
-
+        console.log('processing events');
         let event = res.result[i];
         if(event.venue.lat && event.venue.lng) {
           setTimeout(() => {
@@ -97,6 +98,7 @@ class App extends Component {
             age: event.age,
             link: event.link,
             facebook: event.facebook,
+            region: event.region,
             venue: {
               name: event.venue.name,
               address: event.venue.address,
@@ -114,6 +116,7 @@ class App extends Component {
           events.push(ev);
         }
       }
+      console.log(events);
       const deduped_events = await removeDuplicatesBy(x => x.id, [...this.props.allEvents, ...events]);
 
 
@@ -171,9 +174,15 @@ class App extends Component {
   scrapeEvents = async () => {
     try {
       if (prompt("Enter secret to continue.") === '19hz') {
-        const response = await fetch(`/api/scrape`);
-        const body = await response.json();
-        return body;
+        let r = parseInt(prompt("Enter region (1-7)"),10);
+        if (r===1 || r===2 || r===3 || r===4 || r===5 || r===6 || r===7) {
+          const response = await fetch(`/api/scrape/${r}`);
+          const body = await response.json();
+          console.log(body);
+          return body;
+        } else {
+          alert("Must enter a number 1-7");
+        }
       } else {
         alert("Access denied");
       }
@@ -196,7 +205,9 @@ class App extends Component {
   }
 
   filter = async (events = null) => {
+    console.log('filter');
     try {
+      events = await this.filterRegion(events);
       events = await this.filterDateRange(events);
       events = await this.filterDays(events);
       events = await this.filterRadius(events);
@@ -215,6 +226,21 @@ class App extends Component {
     }
   }
 
+  filterRegion(all_events = null) {
+    let region = parseInt(this.props.settings.region, 10);
+    all_events = all_events || this.props.allEvents;
+    if (region > 0) {
+      let events = [];
+      for (let i=0; i < all_events.length; i++) {
+        if (all_events[i].region === region) {
+          events.push(all_events[i]);
+        }
+      }
+      return events;
+      }
+    return all_events;
+  }
+
   filterDateRange(all_events = null) {
     let date_range_filter = this.props.settings.dateRange;
     all_events = all_events || this.props.allEvents;
@@ -225,10 +251,6 @@ class App extends Component {
 
     let min_date = date_range_filter.min ? new Date(parseInt(min_split[0], 10), parseInt(min_split[1], 10)-1, parseInt(min_split[2], 10)) : new Date(Date.now());
     let max_date = date_range_filter.max ? new Date(parseInt(max_split[0], 10), parseInt(max_split[1], 10)-1, parseInt(max_split[2], 10)) : null;
-
-    console.log(date_range_filter.min, min_date);
-    console.log(date_range_filter.max, max_date);
-
 
     for (let i=0; i < all_events.length; i++) {
       let event_date = new Date(all_events[i].date);
@@ -313,7 +335,7 @@ class App extends Component {
     }
   }
 
-  filterSearch(all_events = null) {
+  filterSearch = async (all_events = null) => {
     all_events = all_events || this.props.allEvents;
     if (this.state.search) {
       const options = {
@@ -333,7 +355,7 @@ class App extends Component {
         ]
       };
       const fuse = new Fuse(all_events, options);
-      let result = fuse.search(this.state.search || " ");
+      let result = await fuse.search(this.state.search || " ");
       return result;
     } else {
       return all_events;
@@ -351,9 +373,9 @@ class App extends Component {
     this.filter();
   }
 
-  liveSearch(e) {
+  liveSearch = async (e) => {
     try {
-      this.setState({ search: e.target.value });
+      await this.setState({ search: e.target.value });
       this.filter();
     } catch(err) {
       console.log("SEARCH ERROR: ", err);
@@ -397,6 +419,23 @@ class App extends Component {
               <h1 className="display-4">Settings</h1>
             </div>
           </div>
+
+          <div className="row mb-5">
+            <div className="col-md-12">
+              <h4>Region</h4>
+                <select className="form-control" id="region-select" value={this.props.settings.region} onChange={async (e) => {await this.props.setSettingsRegion(e.target.value); this.filter()}}>
+                  <option value="0">All (experimental)</option>
+                  <option value="1">SF Bay Area</option>
+                  <option value="2">Los Angeles</option>
+                  <option value="3">Atlanta</option>
+                  <option value="4">Texas</option>
+                  <option value="5">Miami</option>
+                  <option value="6">Phoenix</option>
+                  <option value="7">Massachusetts</option>
+                </select>
+            </div>
+          </div>
+
 
           <div className="row mb-5">
             <div className="col-md-12">
@@ -518,8 +557,8 @@ const mapDispatchToProps = (dispatch) => {
     setCurrentLocation: (currentLocation) => dispatch(actions.setCurrentLocation(currentLocation)),
     setWindow: (window) => dispatch(actions.setWindow(window)),
     setSettingsShowCircle: (bool) => dispatch(actions.setSettingsShowCircle(bool)),
+    setSettingsRegion: (region) => dispatch(actions.setSettingsRegion(region)),
   };
 }
-
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);

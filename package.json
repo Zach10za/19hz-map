@@ -21,6 +21,7 @@
     "jade": "~1.11.0",
     "morgan": "~1.9.0",
     "mysql": "^2.15.0",
+    "react-metrics": "^2.4.0",
     "request": "^2.83.0",
     "serve-favicon": "~2.4.5"
   },
