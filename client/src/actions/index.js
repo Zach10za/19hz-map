@@ -63,6 +63,15 @@ export const setModalEvents = (events) => {
   };
 }
 
+export const setTBAEvents = (events) => {
+  return {
+    type: 'SET_TBA_EVENTS',
+    payload:  {
+      events, // array of events objects
+    }
+  };
+}
+
 export const setShowSettings = (bool) => {
   return {
     type: 'SET_SHOW_SETTINGS',

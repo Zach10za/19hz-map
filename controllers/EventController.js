@@ -1,4 +1,5 @@
 const request = require('request');
+const csv = require('csv');
 const cheerio = require('cheerio');
 const Event = require('../models/Events.js');
 const Venue = require('../models/Venues.js');
@@ -6,7 +7,6 @@ const Organizer = require('../models/Organizers.js');
 const Tag = require('../models/Tags.js');
 
 exports.index = async (req, res) => {
-    console.log("Calling EventController.index");
     try {
         const events_result = await Event.all();
         let events = events_result.result;
@@ -14,8 +14,10 @@ exports.index = async (req, res) => {
             const venue = await Venue.findById(events[i].location);
             events[i].venue = venue.result[0];
         }
+
         return res.send({ success: true, count: events.length, result: events });
     } catch(err) {
+        console.error(err);
         return err;
     }
 }
@@ -72,7 +74,148 @@ exports.findByVenue = async (req, res) => {
     }
 }
 
-exports.scrapeEvents = function(req, res) {
+exports.fetchEvents = function(req, res) {
+  try {
+    console.log('fetching events');
+    let events_found = 0;
+    let events = [];
+    let region = 2;
+    // let region = req.params.region;
+    let link = 'https://19hz.info/events_LosAngeles.csv';
+    switch(region) {
+      case '1':
+        link = 'https://19hz.info/events_BayArea.csv';
+        break;
+      case '2':
+        link = 'https://19hz.info/events_LosAngeles.csv';
+        break;
+      case '3':
+        link = 'https://19hz.info/events_Atlanta.csv';
+        break;
+      case '4':
+        link = 'https://19hz.info/events_Texas.csv';
+        break;
+      case '5':
+        link = 'https://19hz.info/events_Miami.csv';
+        break;
+      case '6':
+        link = 'https://19hz.info/events_Phoenix.csv';
+        break;
+      case '7':
+        link = 'https://19hz.info/events_Massachusetts.csv';
+        break;
+    }
+    request.get(link, (err, response, result) => {
+      if (!err && response.statusCode === 200) {
+        // result = date, title, tags, venue, time, price, age, organizers, link, fb, excel date
+        csv.parse(result, (error, data) => {
+          data.map( async (row) => {
+            let exists = await Event.findByName(row[1]);
+            if (exists.success && exists.result.length < 1) {
+              let venue_name = (row[3]).split(' (')[0];
+              let venue = await Venue.findByName(venue_name);
+              if (venue.success) {
+                let venue_id;
+                if (venue.result.length > 0) {
+                  venue_id = venue.result[0].id
+                } else if (venue_name === 'TBA') {
+                  venue_id = 0;
+                }
+                if (venue_id) {
+                  let new_date = new Date((parseFloat(row[10], 10) - 2.047 - (70 * 365.2422)) * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+                  let event = await Event.create({
+                    event_date: new_date,
+                    time: row[4],
+                    title: (row[1]).split(' (')[0],
+                    location: venue_id,
+                    age: row[6],
+                    price: row[5],
+                    link: row[8],
+                    facebook: row[9],
+                    region: region,
+                  });
+                  events_found++;
+                  let organizers = (row[7] || '').split(', ');
+                  for (let j=0; j<organizers.length; j++) {
+                    let organizer = await Organizer.findOrCreate(organizers[j]);
+                    let organizer_link = await Organizer.linkToEvent(event.id, organizer.result[0].id);
+                  }
+
+                  let tags = (row[2] || '').split(', ');
+                  for (let j=0; j<tags.length; j++) {
+                      let tag = await Tag.findOrCreate(tags[j]);
+                      let tag_link = await Tag.linkToEvent(event.id, tag.result[0].id);
+                  }
+                }
+              } else {
+                console.error('COULD NOT GET VENUE');
+              }
+            } else {
+              console.error('EVENT EXIST');
+            }
+          });
+        });
+      } else {
+        console.error('REQUEST ERR:', err);
+      }
+    });
+    console.log('Found ' + events_found + ' events');
+  } catch(err) {
+    console.error('FETCH EVENTS ERROR:', err);
+  }
+}
+
+const processBatch = async (raw_events) => {
+    console.log('Looking for new events');
+    try {
+        let events_added = 0;
+        for (let i=0; i<raw_events.length; i++) {
+            let raw_event = raw_events[i];
+            let date_split = raw_event.date.split('/');
+            let new_date = date_split[0]+'-'+date_split[1]+'-'+date_split[2];
+            const find_if_exists = await Event.findByNameAndDate(raw_event.title, new_date);
+            if (find_if_exists.success && find_if_exists.result.length < 1) {
+                let new_event = {
+                    event_date: new_date,
+                    time: raw_event.time,
+                    title: raw_event.title,
+                    location: raw_event.location,
+                    age: raw_event.age,
+                    price: raw_event.price,
+                    link: raw_event.link,
+                    facebook: raw_event.facebook,
+                    region: raw_event.region,
+                }
+                const venue = await Venue.findOrCreate(new_event.location);
+                if (venue.success) new_event.location = venue.result[0].id;
+                const precise_location = Venue.getAndStorePreciseLocation(new_event.location);
+
+                const create_event = await Event.create(new_event);
+                new_event['id'] = create_event.id;
+
+                for (let j=0; j<raw_event.organizers.length; j++) {
+                    console.log('Finding/Creating Organizer');
+                    let organizer = await Organizer.findOrCreate(raw_event.organizers[j]);
+                    let organizer_link = await Organizer.linkToEvent(new_event.id, organizer.result[0].id);
+                }
+
+                for (let j=0; j<raw_event.tags.length; j++) {
+                    console.log('Finding/Creating Tag');
+                    let tag = await Tag.findOrCreate(raw_event.tags[j]);
+                    let tag_link = await Tag.linkToEvent(new_event.id, tag.result[0].id);
+                }
+                events_added++;
+            }
+        }
+        console.log('Found ' + events_added + ' new events');
+        return { success: true, new_events: events_added };
+    } catch(err) {
+        console.error('PROCESS ERR:', err);
+        return err;
+    }
+}
+
+exports.scrapeEventsOLD = function(req, res) {
     events = [];
     console.log(req.params.region);
     let region = req.params.region;
@@ -169,7 +312,7 @@ exports.scrapeEvents = function(req, res) {
     });
 }
 
-const processBatch = async (raw_events) => {
+const processBatchOLD = async (raw_events) => {
     console.log('Looking for new events');
     try {
         let events_added = 0;
@@ -217,54 +360,4 @@ const processBatch = async (raw_events) => {
         console.error('PROCESS ERR:', err);
         return err;
     }
-}
-
-exports.createEvent = function(req, cb) {
-    // Check if there is another event with the same title and date
-    // Event.exists(event.title, event.date, function(result){
-    //     if (result.success) {
-    //         if (result.data.length > 0) {
-    //             cb({ success: false, message: 'Even already exists' });
-    //         } else {
-    //             Venue.findByNameOrCreate(event.title, function(result){
-
-    //                     Event.create(new_event, function(result) {
-    //                         if (result.success) {
-    //                             new_event['id'] = result.id;
-    //                             for (let i=0; i<event.organizers.length; i++) {
-    //                                 let organizer_id = null;
-    //                                 Organizer.findByNameOrCreate(event.organizers[i], function(result){
-
-    //                                 });
-    //                             }
-    //                         }
-    //                     });
-    //                 }
-    //             });
-
-    //         }
-    //     }
-    // });
-    // let event = {
-    //     date: '',
-    //     time: '',
-    //     title: '',
-    //     location: '',
-    //     price: '',
-    //     age: '',
-    //     link: ''
-    // };
-    // check if event exists
-    // check if venue exists
-    // if not create venue
-
-    // check if organizer(s) exist
-    // if not create organizers
-    // create entry(s) in event_organizer table
-    // check if tags exist
-    // if not create tags
-    // create entry(s) in event_tags table
-    //
-    // process event to fit in table
-    // store event detail in event table
 }

@@ -4,6 +4,7 @@ const initialState = {
 	allEvents: [],
   currentEvents: [],
   modalEvents: [],
+  tbaEvents: [],
   settings: {
     dateRange: {
       min: '',
@@ -69,6 +70,11 @@ const rootReducer = (state = initialState, action) => {
       return {
         ...state,
         modalEvents: action.payload.events
+      };
+    case 'SET_TBA_EVENTS':
+      return {
+        ...state,
+        tbaEvents: action.payload.events
       };
     case 'SET_SHOW_SETTINGS':
       return {
@@ -230,57 +236,55 @@ const rootReducer = (state = initialState, action) => {
 };
 
 const calculateClusters = (events, zoom) => {
-    let clusters = [];
+  let clusters = [];
 
-    // This odd array is tjhe different margins to check how close together two points are at specific zoom levels.
-    // The more zoomed in, the lower the margin.
-    let distance_map = [1,1,1,1,1,1,1,1,0.5,0.3,0.15,0.05,0.02,0.008,0.004,0.001,0.0000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001];
-    let distance = distance_map[zoom];
+  // This odd array is tjhe different margins to check how close together two points are at specific zoom levels.
+  // The more zoomed in, the lower the margin.
+  let distance_map = [1,1,1,1,1,1,1,1,0.5,0.3,0.15,0.05,0.02,0.008,0.004,0.001,0.0000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001,0.00000001];
+  let distance = distance_map[zoom];
 
-    for (let i=0; i < events.length; i++) {
+  for (let i=0; i < events.length; i++) {
 
-      if (!events[i].venue.location.lat || !events[i].venue.location.lng) break; // must have lat and lng
+    if (!events[i].venue.location.lat || !events[i].venue.location.lng) continue; // must have lat and lng to be on the map
 
       // starts by making a brand new cluster with just 1 event (itself)
-      let new_cluster = {};
-      new_cluster.events = [events[i]];
-      new_cluster.lat = events[i].venue.location.lat;
-      new_cluster.lng = events[i].venue.location.lng;
+    let new_cluster = {};
+    new_cluster.events = [events[i]];
+    new_cluster.lat = events[i].venue.location.lat;
+    new_cluster.lng = events[i].venue.location.lng;
 
-      let closest = {index: -1, distance: 999}; 
+    let closest = {index: -1, distance: 999}; 
 
-      // iterate through all clusters for each event
-      for (let j=0; j < clusters.length; j++) {
-        let lat_distance = Math.abs(clusters[j].lat - new_cluster.lat);
-        let lng_distance = Math.abs(clusters[j].lng - new_cluster.lng);
+    // iterate through all clusters for each event
+    for (let j=0; j < clusters.length; j++) {
+      let lat_distance = Math.abs(clusters[j].lat - new_cluster.lat);
+      let lng_distance = Math.abs(clusters[j].lng - new_cluster.lng);
 
-        // find the cluster that is closest to the new cluster we created but within the margin we set
-        if (lat_distance < distance && lng_distance < distance) {
-          if (lat_distance + lng_distance < closest.distance ) {
-            closest.index = j;
-            closest.distance = lat_distance + lng_distance;
-          }
+      // find the cluster that is closest to the new cluster we created but within the margin we set
+      if (lat_distance < distance && lng_distance < distance) {
+        if (lat_distance + lng_distance < closest.distance ) {
+          closest.index = j;
+          closest.distance = lat_distance + lng_distance;
         }
       }
-
-      // If a nearby cluster was found, add all the clusters events into the new cluster and get the new average of all lats and lngs
-      if (closest.index > -1) {
-        new_cluster.events = [...new_cluster.events, ...clusters[closest.index].events];
-        let sum_lat = 0;
-        let sum_lng = 0;
-        for (let x=0; x < clusters[closest.index].events.length; x++) {
-          sum_lat += parseFloat(clusters[closest.index].events[x].venue.location.lat);
-          sum_lng += parseFloat(clusters[closest.index].events[x].venue.location.lng);
-        }
-        new_cluster.lat = sum_lat / clusters[closest.index].events.length;
-        new_cluster.lng = sum_lng / clusters[closest.index].events.length;
-
-        // remove the nearby cluster than has been replaced by the new one
-        clusters.splice(closest.index, 1);
-      }
-      clusters.push(new_cluster);
     }
-    return clusters;
+    // If a nearby cluster was found, add all the clusters events into the new cluster and get the new average of all lats and lngs
+    if (closest.index > -1) {
+      new_cluster.events = [...new_cluster.events, ...clusters[closest.index].events];
+      let sum_lat = 0;
+      let sum_lng = 0;
+      for (let x=0; x < clusters[closest.index].events.length; x++) {
+        sum_lat += parseFloat(clusters[closest.index].events[x].venue.location.lat);
+        sum_lng += parseFloat(clusters[closest.index].events[x].venue.location.lng);
+      }
+      new_cluster.lat = sum_lat / clusters[closest.index].events.length;
+      new_cluster.lng = sum_lng / clusters[closest.index].events.length;
+      // remove the nearby cluster than has been replaced by the new one
+      clusters.splice(closest.index, 1);
+    }
+    clusters.push(new_cluster);
   }
+  return clusters;
+}
 
 export default rootReducer;

@@ -8,7 +8,7 @@ const TagController = require('../controllers/TagController.js');
 const VenueController = require('../controllers/VenueController.js');
 
 // Scrape events from 19hz.info
-router.get('/api/scrape/:region', EventController.scrapeEvents);
+router.get('/api/scrape/:region', EventController.fetchEvents);
 
 // API calls for events
 router.get('/api/events', EventController.index);
@@ -28,9 +28,10 @@ router.get('/tags/:id/events', EventController.findByTag);
 
 // API calls for venues
 router.get('/api/venues', VenueController.getAll);
-router.post('/api/venues/findorcreate', VenueController.findOrCreate);
-router.get('/api/venues/:id/events', EventController.findByVenue);
-router.post('/api/venues/locate', VenueController.getPreciseLocation);
-router.post('/api/venues/locate/getandstore', VenueController.getAndStorePreciseLocation);
+router.get('/api/venues/fetch', VenueController.fetchVenues);
+// router.post('/api/venues/findorcreate', VenueController.findOrCreate);
+// router.get('/api/venues/:id/events', EventController.findByVenue);
+// router.post('/api/venues/locate', VenueController.getPreciseLocation);
+// router.post('/api/venues/locate/getandstore', VenueController.getAndStorePreciseLocation);
 
 module.exports = router;

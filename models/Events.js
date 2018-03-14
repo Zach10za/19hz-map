@@ -36,7 +36,8 @@ exports.all = function() {
             FROM
                 events 
             WHERE
-                event_date >= CURDATE() 
+                event_date >= CURDATE() AND
+                region = 2 
             ORDER BY
                 event_date DESC`
             , function(err, result) {

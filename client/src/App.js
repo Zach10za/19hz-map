@@ -73,50 +73,56 @@ class App extends Component {
 
       let res = await this.getEvents();
       let events = [];
+      let tba_events = [];
 
       for (let i=0; i < res.result.length; i++) {
-        console.log('processing events');
         let event = res.result[i];
-        if(event.venue.lat && event.venue.lng) {
-          setTimeout(() => {
-            this.props.setLoadingMessage({
-              message: 'Getting stored events',
-              eventsLoaded: i,
-              eventsToLoad: res.result.length,
-            })
-          }, loadingTimeout);
+        setTimeout(() => {
+          this.props.setLoadingMessage({
+            message: 'Getting stored events',
+            eventsLoaded: i,
+            eventsToLoad: res.result.length,
+          })
+        }, loadingTimeout);
 
-          let date_parts = event.event_date.split('-');
-          let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
+        let date_parts = event.event_date.split('-');
+        let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
 
-          let ev = {
-            id: event.id,
-            title: event.title,
-            date: date,
-            time: event.time,
-            price: event.price,
-            age: event.age,
-            link: event.link,
-            facebook: event.facebook,
-            region: event.region,
-            venue: {
-              name: event.venue.name,
-              address: event.venue.address,
-              place_id: event.venue.place_id,
-              price: event.venue.price_level,
-              rating: event.venue.rating,
-              location: {
-                lat: parseFloat(event.venue.lat),
-                lng: parseFloat(event.venue.lng),
-              }
-            },
-            organizers: event.organizersList ? event.organizersList.split(',') : [],
-            tags: event.tagsList ? event.tagsList.split(',') : [],
-          };
+        let ev = {
+          id: event.id,
+          title: event.title,
+          date: date,
+          time: event.time,
+          price: event.price,
+          age: event.age,
+          link: event.link,
+          facebook: event.facebook,
+          region: event.region,
+          venue: {
+            name: event.venue.name ,
+            address: event.venue.address,
+            place_id: event.venue.place_id,
+            price: event.venue.price_level,
+            rating: event.venue.rating,
+            location: {
+              lat: parseFloat(event.venue.lat),
+              lng: parseFloat(event.venue.lng),
+            }
+          },
+          organizers: event.organizersList ? event.organizersList.split(',') : [],
+          tags: event.tagsList ? event.tagsList.split(',') : [],
+        };
+
+        if(event.venue.lat && event.venue.lng && event.venue.name !== 'TBA') {
           events.push(ev);
+        } else if (event.venue.name === 'TBA') {
+          console.log(ev);
+          tba_events.push(ev);
+        } else {
+          console.log(event.venue);
         }
       }
-      console.log(events);
+
       const deduped_events = await removeDuplicatesBy(x => x.id, [...this.props.allEvents, ...events]);
 
 
@@ -143,7 +149,10 @@ class App extends Component {
 
       this.props.setAllEvents(deduped_events);
       this.props.setCurrentEvents(deduped_events);
+      this.props.setTBAEvents(tba_events);
       this.props.setLoading(false);
+
+      console.log(tba_events);
 
 
       await this.filter();
@@ -161,6 +170,8 @@ class App extends Component {
 
   getEvents = async () => {
     try {
+      // const response = await fetch('/api/venues/fetch');
+      // const response = await fetch('/api/scrape/2');
       const response = await fetch('/api/events/');
       const body = await response.json();
       console.log(body.result.length + ' events found');
@@ -178,7 +189,6 @@ class App extends Component {
         if (r===1 || r===2 || r===3 || r===4 || r===5 || r===6 || r===7) {
           const response = await fetch(`/api/scrape/${r}`);
           const body = await response.json();
-          console.log(body);
           return body;
         } else {
           alert("Must enter a number 1-7");
@@ -220,13 +230,13 @@ class App extends Component {
       });
 
       this.props.setCurrentEvents(events);
-      this.props.calculateClusters(this.props.currentEvents, this.props.window.zoom);
+      this.props.calculateClusters(events, this.props.window.zoom);
     } catch(err) {
       console.log("FILTER ERROR: ", err);
     }
   }
 
-  filterRegion(all_events = null) {
+  filterRegion = async (all_events = null) => {
     let region = parseInt(this.props.settings.region, 10);
     all_events = all_events || this.props.allEvents;
     if (region > 0) {
@@ -241,7 +251,7 @@ class App extends Component {
     return all_events;
   }
 
-  filterDateRange(all_events = null) {
+  filterDateRange = async (all_events = null) => {
     let date_range_filter = this.props.settings.dateRange;
     all_events = all_events || this.props.allEvents;
     let events = [];
@@ -262,7 +272,7 @@ class App extends Component {
     return events;
   }
 
-  filterDays(all_events = null) {
+  filterDays = async (all_events = null) => {
     let days_filter = this.props.settings.days;
     all_events = all_events || this.props.allEvents;
     let events = [];
@@ -280,7 +290,7 @@ class App extends Component {
     return events;
   }
 
-  filterRadius(all_events = null) {
+  filterRadius = async (all_events = null) => {
     let location = this.props.currentLocation || this.props.window.center;
     let radius_filter = this.props.settings.radius;
     all_events = all_events || this.props.allEvents;
@@ -318,7 +328,7 @@ class App extends Component {
     return R * C;
   }
 
-  filterRating(all_events = null) {
+  filterRating = async (all_events = null) => {
     let rating = this.props.settings.rating;
     all_events = all_events || this.props.allEvents;
     if (rating > 0) {
@@ -355,7 +365,7 @@ class App extends Component {
         ]
       };
       const fuse = new Fuse(all_events, options);
-      let result = await fuse.search(this.state.search || " ");
+      let result = await fuse.search(this.state.search || all_events);
       return result;
     } else {
       return all_events;
@@ -396,6 +406,9 @@ class App extends Component {
         <MarkerModal events={this.props.modalEvents} />
         <div className="events-counter">
           {this.props.currentEvents.length} Events
+        </div>
+        <div className="tba-events-counter">
+          {this.props.tbaEvents.length} TBA
         </div>
         <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
 
@@ -545,6 +558,7 @@ const mapDispatchToProps = (dispatch) => {
     setCurrentEvents: (currentEvents) => dispatch(actions.setCurrentEvents(currentEvents)),
     addCurrentEvents: (event) => dispatch(actions.addCurrentEvents(event)),
     setModalEvents: (modalEvents) => dispatch(actions.setModalEvents(modalEvents)),
+    setTBAEvents: (events) => dispatch(actions.setTBAEvents(events)),
     setShowSettings: (bool) => dispatch(actions.setShowSettings(bool)),
     setSettings: (settings) => dispatch(actions.setSettings(settings)),
     setSettingsDateRange: (dateRange) => dispatch(actions.setSettingsDateRange(dateRange)),

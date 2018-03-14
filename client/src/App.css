@@ -24,6 +24,20 @@
   top: 20px;
   left: 20px;
 }
+.tba-events-counter {
+  z-index: 9;
+  position: absolute;
+  top: 100px;
+  left: 20px;
+  background: rgba(0,0,0,0.5);
+  color: #FFF;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 20px;
+  padding: 10px;
+  border-radius: .25rem;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
 .events-counter {
   z-index: 9;
   position: absolute;
