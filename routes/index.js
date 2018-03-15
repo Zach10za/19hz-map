@@ -12,6 +12,7 @@ router.get('/api/scrape/:region', EventController.fetchEvents);
 
 // API calls for events
 router.get('/api/events', EventController.index);
+router.get('/api/events/:region', EventController.getByRegion);
 router.get('/api/events/:id/tags', EventController.getTags);
 router.get('/api/events/:id/organizers', EventController.getOrganizers);
 
@@ -28,7 +29,7 @@ router.get('/tags/:id/events', EventController.findByTag);
 
 // API calls for venues
 router.get('/api/venues', VenueController.getAll);
-router.get('/api/venues/fetch', VenueController.fetchVenues);
+router.get('/api/venues/fetch/:region', VenueController.fetchVenues);
 // router.post('/api/venues/findorcreate', VenueController.findOrCreate);
 // router.get('/api/venues/:id/events', EventController.findByVenue);
 // router.post('/api/venues/locate', VenueController.getPreciseLocation);

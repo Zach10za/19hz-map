@@ -22,6 +22,21 @@ exports.index = async (req, res) => {
     }
 }
 
+exports.getByRegion = async (req, res) => {
+    try {
+        const events_result = await Event.region(req.params.region);
+        let events = events_result.result;
+        for (let i=0; i<events.length; i++) {
+            const venue = await Venue.findById(events[i].location);
+            events[i].venue = venue.result[0];
+        }
+        return res.send({ success: true, count: events.length, result: events });
+    } catch(err) {
+        console.error(err);
+        return err;
+    }
+}
+
 exports.getTags = async (req, res) => {
     try {
         res.send( await Event.tags(req.params.id) );
@@ -74,13 +89,11 @@ exports.findByVenue = async (req, res) => {
     }
 }
 
-exports.fetchEvents = function(req, res) {
+exports.fetchEvents = async (req, res) => {
   try {
     console.log('fetching events');
     let events_found = 0;
-    let events = [];
-    let region = 2;
-    // let region = req.params.region;
+    let region = req.params.region || 1;
     let link = 'https://19hz.info/events_LosAngeles.csv';
     switch(region) {
       case '1':
@@ -105,12 +118,13 @@ exports.fetchEvents = function(req, res) {
         link = 'https://19hz.info/events_Massachusetts.csv';
         break;
     }
-    request.get(link, (err, response, result) => {
+    console.log(link);
+    await request.get(link, (err, response, result) => {
       if (!err && response.statusCode === 200) {
         // result = date, title, tags, venue, time, price, age, organizers, link, fb, excel date
         csv.parse(result, (error, data) => {
           data.map( async (row) => {
-            let exists = await Event.findByName(row[1]);
+            let exists = await Event.findByNameAndRegion(row[1], region);
             if (exists.success && exists.result.length < 1) {
               let venue_name = (row[3]).split(' (')[0];
               let venue = await Venue.findByName(venue_name);
@@ -160,6 +174,7 @@ exports.fetchEvents = function(req, res) {
       }
     });
     console.log('Found ' + events_found + ' events');
+    return res.sendStatus(200);
   } catch(err) {
     console.error('FETCH EVENTS ERROR:', err);
   }

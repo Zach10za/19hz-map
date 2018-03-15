@@ -13,6 +13,8 @@ class App extends Component {
     this.state = {
       search: ''
     }
+    this.getEvents = this.getEvents.bind(this);
+    this.handleRegionChange = this.handleRegionChange.bind(this);
     this.filter = this.filter.bind(this);
     this.filterRegion = this.filterRegion.bind(this);
     this.filterDays = this.filterDays.bind(this);
@@ -23,68 +25,88 @@ class App extends Component {
   }
 
   componentWillMount() {
-    // Get Cached events and settings
-    // let cached_allEvents = localStorage.getItem("allEvents");
-    // let cached_settings = localStorage.getItem("settings");
-    // let cached_window = localStorage.getItem("window");
-
-    // if (cached_allEvents) {
-    //   let tzoffset = (new Date()).getTimezoneOffset() * 60000;
-    //   let cur_date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
-    //   let all_events = JSON.parse(cached_allEvents);
-    //   all_events = all_events.filter((event, i) => {
-    //     return event.date >= cur_date;
-    //   });
-    //   this.props.setAllEvents(all_events);
-    // }
-    // if (cached_settings) this.props.setSettings(JSON.parse(cached_settings));
-    // if (cached_window) this.props.setWindow(JSON.parse(cached_window));
-    this.props.setLoading(true);
   }
 
   componentDidMount = async () => {
-    const loadingTimeout = 10;
-
-    const removeDuplicatesBy = async (keyFn, array) => {
-      try {
-        let mySet = new Set();
-        return array.filter((x) => {
-          let key = keyFn(x), isNew = !mySet.has(key);
-          if (isNew) mySet.add(key);
-          return isNew;
-        });
-      } catch (err) {
-        return err;
-      }
-    }
-
     try {
-      setTimeout(() => {
-        this.props.setLoadingMessage({
-          message: 'Fetching events',
-          eventsLoaded: 0,
-          eventsToLoad: 0,
-        })
-      }, loadingTimeout);
 
       let tzoffset = (new Date()).getTimezoneOffset() * 60000;
       let date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
       this.props.setSettingsDateRange({ min: date, max: '' });
 
-      let res = await this.getEvents();
+      let res = await this.getEvents(2);
+      // let events = [];
+      // let tba_events = [];
+
+      // for (let i=0; i < res.result.length; i++) {
+      //   let event = res.result[i];
+
+      //   let date_parts = event.event_date.split('-');
+      //   let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
+
+      //   let ev = {
+      //     id: event.id,
+      //     title: event.title,
+      //     date: date,
+      //     time: event.time,
+      //     price: event.price,
+      //     age: event.age,
+      //     link: event.link,
+      //     facebook: event.facebook,
+      //     region: event.region,
+      //     venue: {
+      //       name: event.venue.name ,
+      //       address: event.venue.address,
+      //       place_id: event.venue.place_id,
+      //       price: event.venue.price_level,
+      //       rating: event.venue.rating,
+      //       location: {
+      //         lat: parseFloat(event.venue.lat),
+      //         lng: parseFloat(event.venue.lng),
+      //       }
+      //     },
+      //     organizers: event.organizersList ? event.organizersList.split(',') : [],
+      //     tags: event.tagsList ? event.tagsList.split(',') : [],
+      //   };
+
+      //   if(event.venue.lat && event.venue.lng && event.venue.name !== 'TBA') {
+      //     events.push(ev);
+      //   } else if (event.venue.name === 'TBA') {
+      //     console.log(ev);
+      //     tba_events.push(ev);
+      //   }
+      // }
+
+      // this.props.setAllEvents([...events, ...tba_events]);
+      // this.props.setCurrentEvents(events);
+      // this.props.setTBAEvents(tba_events);
+      // this.props.setLoading(false);
+
+      // console.log(tba_events);
+
+
+      // await this.filter();
+
+    } catch(err) {
+      console.log("APP_DID_MOUNT ERROR: ", err);
+    }
+  }
+
+  getEvents = async (region = 0) => {
+    try {
+    this.props.setLoading(true);
+      // const response = await fetch('/api/venues/fetch/1');
+      // const response = await fetch('/api/scrape/1');
+      if (parseInt(region, 10) < 1) region = '';
+      const response = await fetch('/api/events/'+region);
+      const body = await response.json();
+      console.log(body.result.length + ' events found');
+
       let events = [];
       let tba_events = [];
 
-      for (let i=0; i < res.result.length; i++) {
-        let event = res.result[i];
-        setTimeout(() => {
-          this.props.setLoadingMessage({
-            message: 'Getting stored events',
-            eventsLoaded: i,
-            eventsToLoad: res.result.length,
-          })
-        }, loadingTimeout);
-
+      for (let i=0; i < body.result.length; i++) {
+        let event = body.result[i];
         let date_parts = event.event_date.split('-');
         let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
 
@@ -116,39 +138,12 @@ class App extends Component {
         if(event.venue.lat && event.venue.lng && event.venue.name !== 'TBA') {
           events.push(ev);
         } else if (event.venue.name === 'TBA') {
-          console.log(ev);
           tba_events.push(ev);
-        } else {
-          console.log(event.venue);
         }
       }
 
-      const deduped_events = await removeDuplicatesBy(x => x.id, [...this.props.allEvents, ...events]);
-
-
-      for (let i=0; i < deduped_events.length; i++) {
-
-        if ((!deduped_events[i].organizers || !deduped_events[i].tags) || (deduped_events[i].organizers.length < 1 && deduped_events[i].tags.length < 1)) {
-          setTimeout(() => {
-            this.props.setLoadingMessage({
-              message: 'Processing events',
-              eventsLoaded: i,
-              eventsToLoad: deduped_events.length,
-            })
-          }, loadingTimeout);
-        }
-      }
-
-      setTimeout(() => {
-        this.props.setLoadingMessage({
-          message: 'Finished',
-          eventsLoaded: deduped_events.length,
-          eventsToLoad: deduped_events.length,
-        })
-      }, loadingTimeout);
-
-      this.props.setAllEvents(deduped_events);
-      this.props.setCurrentEvents(deduped_events);
+      this.props.setAllEvents([...events, ...tba_events]);
+      this.props.setCurrentEvents(events);
       this.props.setTBAEvents(tba_events);
       this.props.setLoading(false);
 
@@ -157,25 +152,7 @@ class App extends Component {
 
       await this.filter();
 
-    } catch(err) {
-      console.log("APP_DID_MOUNT ERROR: ", err);
-    }
 
-    // window.addEventListener('beforeunload', () => {
-    //   localStorage.setItem("allEvents", JSON.stringify(this.props.allEvents));
-    //   localStorage.setItem("settings", JSON.stringify(this.props.settings));
-    //   localStorage.setItem("window", JSON.stringify(this.props.window));
-    // });
-  }
-
-  getEvents = async () => {
-    try {
-      // const response = await fetch('/api/venues/fetch');
-      // const response = await fetch('/api/scrape/2');
-      const response = await fetch('/api/events/');
-      const body = await response.json();
-      console.log(body.result.length + ' events found');
-      return body;
     } catch(err) {
       console.error('FETCH_EVENTS_ERR:', err);
       return err;
@@ -187,9 +164,16 @@ class App extends Component {
       if (prompt("Enter secret to continue.") === '19hz') {
         let r = parseInt(prompt("Enter region (1-7)"),10);
         if (r===1 || r===2 || r===3 || r===4 || r===5 || r===6 || r===7) {
+          // const response = await fetch(`/api/venues/fetch/${r}`);
+        console.log('fetching events');
           const response = await fetch(`/api/scrape/${r}`);
-          const body = await response.json();
-          return body;
+          // const body = await response.json();
+          // return body;
+        } else if (r === 0) {
+          for (let i = 1; i < 8; i++) {
+            //await fetch(`/api/venues/fetch/${i}`);
+            await fetch(`/api/scrape/${i}`)
+          }
         } else {
           alert("Must enter a number 1-7");
         }
@@ -382,6 +366,13 @@ class App extends Component {
     this.props.setSettingsDateRange(dateRange);
     this.filter();
   }
+  handleRegionChange = async (e) => {
+    let value = e.target.value;
+
+    await this.props.setSettingsRegion(value);
+    await this.getEvents(value);
+    this.filter();
+  }
 
   liveSearch = async (e) => {
     try {
@@ -414,10 +405,10 @@ class App extends Component {
 
         <div className="search-bar">
           <input type="search"
-            className="form-control" 
-            id="live-search" 
+            className="form-control"
+            id="live-search"
             placeholder="Search for events, venues, artists..."
-            value={this.state.search} 
+            value={this.state.search}
             onChange={this.liveSearch.bind(this)}/>
         </div>
 
@@ -436,7 +427,7 @@ class App extends Component {
           <div className="row mb-5">
             <div className="col-md-12">
               <h4>Region</h4>
-                <select className="form-control" id="region-select" value={this.props.settings.region} onChange={async (e) => {await this.props.setSettingsRegion(e.target.value); this.filter()}}>
+                <select className="form-control" id="region-select" value={this.props.settings.region} onChange={this.handleRegionChange}>
                   <option value="0">All (experimental)</option>
                   <option value="1">SF Bay Area</option>
                   <option value="2">Los Angeles</option>

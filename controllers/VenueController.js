@@ -45,12 +45,38 @@ exports.getAll = function(req, res) {
 //     }
 // }
 
-exports.fetchVenues = async () => {
+exports.fetchVenues = async (req, res) => {
   try {
     console.log('fetching venues');
     let venues_found = 0;
-    request.get('http://19hz.info/venues_LosAngeles.csv', async (err, response, result) => {
+    let region = req.params.region || 1;
+    let link = 'https://19hz.info/venues_LosAngeles.csv';
+    switch(region) {
+      case '1':
+        link = 'https://19hz.info/venues_BayArea.csv';
+        break;
+      case '2':
+        link = 'https://19hz.info/venues_LosAngeles.csv';
+        break;
+      case '3':
+        link = 'https://19hz.info/venues_Atlanta.csv';
+        break;
+      case '4':
+        link = 'https://19hz.info/venues_Texas.csv';
+        break;
+      case '5':
+        link = 'https://19hz.info/venues_Miami.csv';
+        break;
+      case '6':
+        link = 'https://19hz.info/venues_Phoenix.csv';
+        break;
+      case '7':
+        link = 'https://19hz.info/venues_Massachusetts.csv';
+        break;
+    }
+    request.get(link, async (err, response, result) => {
       if (!err && response.statusCode === 200) {
+        console.log('fetching venues from ', link);
         // result = name, address, link, fb
         let tba = await Venue.findById(1);
         if (tba.success && tba.result.length < 1) {
@@ -64,24 +90,31 @@ exports.fetchVenues = async () => {
             rating: null,
             lat: 0,
             lng: 0,
+            region: region,
           });
         }
         csv.parse(result, (error, data) => {
           data.map( async (row) => {
-            let exists = await Venue.findByName(row[0]);
+            let exists = await Venue.findByAddressAndRegion(row[1], region);
             if (exists.success && exists.result.length < 1) {
               let precise_location = await exports.getPreciseLocation(row[1]);
-              let venue = await Venue.create({
-                name: row[0],
-                link: row[2],
-                fb: row[3],
-                place_id: precise_location.place_id,
-                address: precise_location.formatted_address,
-                price_level: precise_location.price_level,
-                rating: precise_location.rating,
-                lat: precise_location.geometry.location.lat,
-                lng: precise_location.geometry.location.lng,
-              });
+              if (precise_location) {
+                console.log('createing venue: ' + row[0] + ' in region ' + region);
+                let venue = await Venue.create({
+                  name: row[0],
+                  link: row[2],
+                  fb: row[3],
+                  place_id: precise_location.place_id,
+                  address: row[1],
+                  price_level: precise_location.price_level,
+                  rating: precise_location.rating,
+                  lat: precise_location.geometry.location.lat,
+                  lng: precise_location.geometry.location.lng,
+                  region: region,
+                });
+              } else {
+                console.error('COULD NOT GET PRECISE LOCATION');
+              }
             } else {
               if (exists.message) console.error(message);
             }
@@ -91,6 +124,7 @@ exports.fetchVenues = async () => {
         console.error('PROBLEM FETCHING VENUES');
       }
     });
+    return res.sendStatus(200);
   } catch(err) {
     console.error('FETCH VENUES ERROR:', err);
   }

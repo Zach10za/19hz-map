@@ -42,6 +42,15 @@ exports.findByName = function(name) {
     });
 }
 
+exports.findByAddressAndRegion = function(address, region) {
+    return new Promise((resolve, reject) => {
+        db.get().query('SELECT * FROM venues WHERE address = ? AND region = ?', [address, region], function(err, result) {
+            if (err) return reject(err);
+            return resolve({ success: true, result: result });
+        });
+    });
+}
+
 // exports.findOrCreate = function(name) {
 //     return new Promise((resolve, reject) => {
 //         db.get().query('SELECT * FROM venues WHERE LOWER(raw_name) = LOWER(?)', name, function(err, result) {

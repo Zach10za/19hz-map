@@ -36,8 +36,7 @@ exports.all = function() {
             FROM
                 events 
             WHERE
-                event_date >= CURDATE() AND
-                region = 2 
+                event_date >= CURDATE()
             ORDER BY
                 event_date DESC`
             , function(err, result) {
@@ -46,6 +45,46 @@ exports.all = function() {
         });
     });
 }
+
+exports.region = function(region) {
+    return new Promise((resolve, reject) => {
+        db.get().query(
+            `SELECT
+                events.*,
+                (
+                SELECT
+                    GROUP_CONCAT(tags.tag)
+                FROM
+                    event_tags
+                INNER JOIN
+                    tags ON tags.id=event_tags.tag_id
+                WHERE
+                    event_tags.event_id = events.id
+                ) AS tagsList,
+                (
+                SELECT
+                    GROUP_CONCAT(organizers.organizer)
+                FROM
+                    event_organizers
+                INNER JOIN
+                    organizers ON organizers.id=event_organizers.organizer_id
+                WHERE
+                    event_organizers.event_id = events.id
+                ) AS organizersList
+            FROM
+                events 
+            WHERE
+                event_date >= CURDATE() AND
+                region = ? 
+            ORDER BY
+                event_date DESC`
+            , region, function(err, result) {
+            if (err) return reject(err);
+            return resolve({ success: true, count: result.length, result: result });
+        });
+    });
+}
+
 
 exports.findById = function(id) {
     return new Promise((resolve, reject) => {
@@ -121,6 +160,16 @@ exports.findByName = function(name) {
         });
     });
 }
+
+exports.findByNameAndRegion = function(name, region) {
+    return new Promise((resolve, reject) => {
+        db.get().query('SELECT * FROM events WHERE title = ? AND region = ?', [name, region], function(err, result) {
+            if (err) return reject(err);
+            return resolve({ success: true, result: result });
+        });
+    });
+}
+
 
 exports.findByNameAndDate = function(name, date) {
     return new Promise((resolve, reject) => {
