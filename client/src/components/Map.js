@@ -61,17 +61,22 @@ class Map extends Component {
 
   render() {
     let bounds = this.props.window.bounds;
+    let OPTIONS = {
+      minZoom: 5,
+      maxZoom: 16,
+    }
     return (
       <GoogleMapReact
         bootstrapURLKeys={{key: this.apiKey}} 
         zoom={this.props.window.zoom || 10}
         center={this.props.window.center}
+        options={OPTIONS}
         resetBoundsOnResize={true}
         gestureHandling='greedy'
         onChange={this.handleChange}
         onZoomAnimationStart={this.handleZoomAnimationStart}
         onZoomAnimationEnd={this.handleZoomAnimationEnd}
-        onChildClick={(i, marker) => this.props.setWindowCenter({lat: parseFloat(marker.lat), lng: parseFloat(marker.lng)})}
+        onChildClick={(i, marker) => this.props.setWindowCenter({lat: parseFloat(marker.lat,10), lng: parseFloat(marker.lng,10)})}
         onGoogleApiLoaded={this.customMapsAPICode}
         yesIWantToUseGoogleMapApiInternals={true}>
 

@@ -147,8 +147,6 @@ class App extends Component {
       this.props.setTBAEvents(tba_events);
       this.props.setLoading(false);
 
-      console.log(tba_events);
-
 
       await this.filter();
 
@@ -199,13 +197,13 @@ class App extends Component {
   }
 
   filter = async (events = null) => {
-    console.log('filter');
     try {
+
       events = await this.filterRegion(events);
       events = await this.filterDateRange(events);
       events = await this.filterDays(events);
       events = await this.filterRadius(events);
-      events = await this.filterRating(events);
+      // events = await this.filterRating(events);
       events = await this.filterSearch(events);
       events.sort(function(a, b) {
         a = new Date(a.date);
@@ -279,7 +277,6 @@ class App extends Component {
     let radius_filter = this.props.settings.radius;
     all_events = all_events || this.props.allEvents;
     if (radius_filter > 0 && this.props.circle) {
-      console.log(radius_filter);
       let events = [];
       for (let i=0; i < all_events.length; i++) {
         let distance = this.getDistanceBetweenPoints(location, all_events[i].venue.location);
@@ -316,7 +313,6 @@ class App extends Component {
     let rating = this.props.settings.rating;
     all_events = all_events || this.props.allEvents;
     if (rating > 0) {
-      console.log(rating);
       let events = [];
       for (let i=0; i < all_events.length; i++) {
         if (all_events[i].venue.rating >= rating) {
@@ -367,8 +363,65 @@ class App extends Component {
     this.filter();
   }
   handleRegionChange = async (e) => {
-    let value = e.target.value;
-
+    let value = parseInt(e.target.value, 10);
+    let center = this.props.window.center;
+    let zoom = 10;
+    switch (value) {
+      case 0:
+        zoom = 5;
+        center = {
+          lat: 37.0902,
+          lng: -95.7129
+        };
+        break;
+      case 1:
+        center = {
+          lat: 37.7749,
+          lng: -122.4194
+        };
+        break;
+      case 2:
+        zoom = 9;
+        center = {
+          lat: 34.0522,
+          lng: -118.2437
+        };
+        break;
+      case 3:
+        zoom = 11;
+        center = {
+          lat: 33.7490,
+          lng: -84.3880
+        };
+        break;
+      case 4:
+        zoom = 7;
+        center = {
+          lat: 31.9686,
+          lng: -99.9018
+        };
+        break;
+      case 5:
+        center = {
+          lat: 25.7617,
+          lng: -80.1918
+        };
+        break;
+      case 6:
+        center = {
+          lat: 33.4484,
+          lng: -112.0740
+        };
+        break;
+      case 7:
+        center = {
+          lat: 42.3601,
+          lng: -71.0589
+        };
+        break;
+    }
+    this.props.setWindowCenter(center);
+    this.props.setWindowZoom(zoom);
     await this.props.setSettingsRegion(value);
     await this.getEvents(value);
     this.filter();
@@ -498,7 +551,7 @@ class App extends Component {
             </div>
           </div>
 
-          <div className="row mb-5">
+{/*          <div className="row mb-5">
             <div className="col-md-12">
               <div className="d-flex w-100  justify-content-between">
                 <h4 style={{ opacity: this.props.settings.rating > 0 ? '1' : '0.5' }}>Venue Rating</h4>
@@ -522,7 +575,7 @@ class App extends Component {
                   aria-describedby="rating-input" />
               </div>
             </div>
-          </div>
+          </div>*/}
 
 
         </div>
@@ -561,6 +614,8 @@ const mapDispatchToProps = (dispatch) => {
     calculateClusters: (events, zoom) => dispatch(actions.calculateClusters(events, zoom)),
     setCurrentLocation: (currentLocation) => dispatch(actions.setCurrentLocation(currentLocation)),
     setWindow: (window) => dispatch(actions.setWindow(window)),
+    setWindowCenter: (center) => dispatch(actions.setWindowCenter(center)),
+    setWindowZoom: (zoom) => dispatch(actions.setWindowZoom(zoom)),
     setSettingsShowCircle: (bool) => dispatch(actions.setSettingsShowCircle(bool)),
     setSettingsRegion: (region) => dispatch(actions.setSettingsRegion(region)),
   };
