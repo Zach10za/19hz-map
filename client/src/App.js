@@ -24,68 +24,13 @@ class App extends Component {
     this.changeDayFilter = this.changeDayFilter.bind(this);
   }
 
-  componentWillMount() {
-  }
-
   componentDidMount = async () => {
     try {
 
       let tzoffset = (new Date()).getTimezoneOffset() * 60000;
       let date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
       this.props.setSettingsDateRange({ min: date, max: '' });
-
-      let res = await this.getEvents(2);
-      // let events = [];
-      // let tba_events = [];
-
-      // for (let i=0; i < res.result.length; i++) {
-      //   let event = res.result[i];
-
-      //   let date_parts = event.event_date.split('-');
-      //   let date = new Date(date_parts[0], date_parts[1] - 1, date_parts[2].substring(0,2));
-
-      //   let ev = {
-      //     id: event.id,
-      //     title: event.title,
-      //     date: date,
-      //     time: event.time,
-      //     price: event.price,
-      //     age: event.age,
-      //     link: event.link,
-      //     facebook: event.facebook,
-      //     region: event.region,
-      //     venue: {
-      //       name: event.venue.name ,
-      //       address: event.venue.address,
-      //       place_id: event.venue.place_id,
-      //       price: event.venue.price_level,
-      //       rating: event.venue.rating,
-      //       location: {
-      //         lat: parseFloat(event.venue.lat),
-      //         lng: parseFloat(event.venue.lng),
-      //       }
-      //     },
-      //     organizers: event.organizersList ? event.organizersList.split(',') : [],
-      //     tags: event.tagsList ? event.tagsList.split(',') : [],
-      //   };
-
-      //   if(event.venue.lat && event.venue.lng && event.venue.name !== 'TBA') {
-      //     events.push(ev);
-      //   } else if (event.venue.name === 'TBA') {
-      //     console.log(ev);
-      //     tba_events.push(ev);
-      //   }
-      // }
-
-      // this.props.setAllEvents([...events, ...tba_events]);
-      // this.props.setCurrentEvents(events);
-      // this.props.setTBAEvents(tba_events);
-      // this.props.setLoading(false);
-
-      // console.log(tba_events);
-
-
-      // await this.filter();
+      await this.getEvents(2);
 
     } catch(err) {
       console.log("APP_DID_MOUNT ERROR: ", err);
@@ -135,14 +80,11 @@ class App extends Component {
           tags: event.tagsList ? event.tagsList.split(',') : [],
         };
 
-        if(event.venue.lat && event.venue.lng && event.venue.name !== 'TBA') {
-          events.push(ev);
-        } else if (event.venue.name === 'TBA') {
-          tba_events.push(ev);
-        }
+        events.push(ev);
+        if (event.venue.name === 'TBA') tba_events.push(ev);
       }
 
-      this.props.setAllEvents([...events, ...tba_events]);
+      this.props.setAllEvents(events);
       this.props.setCurrentEvents(events);
       this.props.setTBAEvents(tba_events);
       this.props.setLoading(false);
@@ -163,8 +105,7 @@ class App extends Component {
         let r = parseInt(prompt("Enter region (1-7)"),10);
         if (r===1 || r===2 || r===3 || r===4 || r===5 || r===6 || r===7) {
           // const response = await fetch(`/api/venues/fetch/${r}`);
-        console.log('fetching events');
-          const response = await fetch(`/api/scrape/${r}`);
+          await fetch(`/api/scrape/${r}`);
           // const body = await response.json();
           // return body;
         } else if (r === 0) {
@@ -213,6 +154,7 @@ class App extends Component {
 
       this.props.setCurrentEvents(events);
       this.props.calculateClusters(events, this.props.window.zoom);
+      this.props.setTBAEvents(events.filter(obj => obj.venue.name === 'TBA'));
     } catch(err) {
       console.log("FILTER ERROR: ", err);
     }
@@ -419,6 +361,13 @@ class App extends Component {
           lng: -71.0589
         };
         break;
+      default:
+        zoom = 5;
+        center = {
+          lat: 37.0902,
+          lng: -95.7129
+        };
+        break;
     }
     this.props.setWindowCenter(center);
     this.props.setWindowZoom(zoom);
@@ -451,7 +400,7 @@ class App extends Component {
         <div className="events-counter">
           {this.props.currentEvents.length} Events
         </div>
-        <div className="tba-events-counter">
+        <div className="btn tba-events-counter" onClick={() => this.props.setModalEvents(this.props.tbaEvents)} data-toggle="modal" data-target="#eventsModal">
           {this.props.tbaEvents.length} TBA
         </div>
         <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>

@@ -57,6 +57,10 @@
     top: auto;
     bottom: 20px;
   }
+  .tba-events-counter {
+    top: auto;
+    bottom: 80px;
+  }
 }
 .btn-scrape-events {
   z-index: 9;
