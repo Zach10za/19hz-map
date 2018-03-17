@@ -127,7 +127,7 @@ exports.fetchEvents = async (req, res) => {
             let exists = await Event.findByNameAndRegion(row[1], region);
             if (exists.success && exists.result.length < 1) {
               let venue_name = (row[3]).split(' (')[0];
-              let venue = await Venue.findByName(venue_name);
+              let venue = await Venue.findByNameAndRegion(venue_name, region);
               if (venue.success) {
                 let venue_id;
                 if (venue.result.length > 0) {
@@ -137,6 +137,7 @@ exports.fetchEvents = async (req, res) => {
                 }
                 if (venue_id) {
                   let new_date = new Date((parseFloat(row[10], 10) - 2.047 - (70 * 365.2422)) * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+                    console.log('createing event: ' + (row[1]).split(' (')[0] + ' in region ' + region);
                   let event = await Event.create({
                     event_date: new_date,
                     time: row[4],
@@ -168,13 +169,13 @@ exports.fetchEvents = async (req, res) => {
               console.error('EVENT EXIST');
             }
           });
+            console.log('Found ' + events_found + ' events');
+          return res.sendStatus(200);
         });
       } else {
         console.error('REQUEST ERR:', err);
       }
     });
-    console.log('Found ' + events_found + ' events');
-    return res.sendStatus(200);
   } catch(err) {
     console.error('FETCH EVENTS ERROR:', err);
   }

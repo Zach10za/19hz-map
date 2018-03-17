@@ -42,6 +42,15 @@ exports.findByName = function(name) {
     });
 }
 
+exports.findByNameAndRegion = function(name, region) {
+    return new Promise((resolve, reject) => {
+        db.get().query('SELECT * FROM venues WHERE name = ? AND region = ?', [name, region], function(err, result) {
+            if (err) return reject(err);
+            return resolve({ success: true, result: result });
+        });
+    });
+}
+
 exports.findByAddressAndRegion = function(address, region) {
     return new Promise((resolve, reject) => {
         db.get().query('SELECT * FROM venues WHERE address = ? AND region = ?', [address, region], function(err, result) {

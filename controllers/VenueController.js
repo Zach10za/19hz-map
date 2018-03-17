@@ -99,8 +99,8 @@ exports.fetchVenues = async (req, res) => {
             if (exists.success && exists.result.length < 1) {
               let precise_location = await exports.getPreciseLocation(row[1]);
               if (precise_location) {
-                console.log('createing venue: ' + row[0] + ' in region ' + region);
-                let venue = await Venue.create({
+                console.log('creating venue: ' + row[0] + ' in region ' + region);
+                await Venue.create({
                   name: row[0],
                   link: row[2],
                   fb: row[3],
@@ -112,6 +112,7 @@ exports.fetchVenues = async (req, res) => {
                   lng: precise_location.geometry.location.lng,
                   region: region,
                 });
+                venues_found++;
               } else {
                 console.error('COULD NOT GET PRECISE LOCATION');
               }
@@ -119,12 +120,13 @@ exports.fetchVenues = async (req, res) => {
               if (exists.message) console.error(message);
             }
           });
+          console.log('Found ' + venues_found + 'venues');
+          return res.sendStatus(200);
         });
       } else {
         console.error('PROBLEM FETCHING VENUES');
       }
     });
-    return res.sendStatus(200);
   } catch(err) {
     console.error('FETCH VENUES ERROR:', err);
   }

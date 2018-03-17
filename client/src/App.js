@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import axios from 'axios';
 import Fuse from 'fuse-js-latest';
 import Map from './components/Map.js';
 import MarkerModal from './components/MarkerModal.js';
@@ -104,14 +105,12 @@ class App extends Component {
       if (prompt("Enter secret to continue.") === '19hz') {
         let r = parseInt(prompt("Enter region (1-7)"),10);
         if (r===1 || r===2 || r===3 || r===4 || r===5 || r===6 || r===7) {
-          // const response = await fetch(`/api/venues/fetch/${r}`);
-          await fetch(`/api/scrape/${r}`);
-          // const body = await response.json();
-          // return body;
+          // await axios.get(`/api/venues/fetch/${r}`);
+          await axios.get(`/api/scrape/${r}`);
         } else if (r === 0) {
           for (let i = 1; i < 8; i++) {
-            //await fetch(`/api/venues/fetch/${i}`);
-            await fetch(`/api/scrape/${i}`)
+            // await axios.get(`/api/venues/fetch/${i}`);
+            await axios.get(`/api/scrape/${i}`);
           }
         } else {
           alert("Must enter a number 1-7");
