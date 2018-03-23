@@ -404,7 +404,7 @@ class App extends Component {
             {this.props.tbaEvents.length} TBA
           </div>
         </div>
-        <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
+        {/*<button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>*/}
 
         <div className="search-bar">
           <input type="search"

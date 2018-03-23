@@ -29,6 +29,7 @@
   top: 40px;
   text-align: center;
   background: rgba(230,0,0,0.5);
+  cursor: pointer;
   color: #FFF;
   font-size: 14px;
   padding: 4px 10px;

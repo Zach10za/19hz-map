@@ -37,6 +37,7 @@ class MarkerModal extends Component {
   }
 
   zoomOnMarker(event) {
+    console.log(event);
     this.props.setWindowCenter(event.venue.location);
     this.props.setWindowZoom(16);
   }
@@ -70,6 +71,8 @@ class MarkerModal extends Component {
             </div>);
         }
         let facebook = event.facebook ? (<a className="btn btn-outline-secondary btn-sm mr-1" target="_blank" title="facebook" href={event.facebook}><i className="fab fa-facebook-square"></i></a>) : undefined;
+        let zoom_marker = (event.venue.location.lat !== 0 && event.venue.location.lat !== 0) ? (<button className="btn btn-outline-secondary btn-sm mr-1" title="view on map" data-dismiss="modal" aria-label="Close" onClick={() => {this.zoomOnMarker(event)}}><i className="fas fa-map-marker-alt"></i></button>) : undefined;
+        let google_map_marker = event.venue.place_id ? (<a className="btn btn-outline-secondary btn-sm mr-1" target="_blank" title="view on google maps" href={"https://www.google.com/maps/place/?q=place_id:" + event.venue.place_id}><i className="fas fa-compass"></i></a>) : undefined;
         return (
           <div className="list-group-item" key={event.id}>
 
@@ -96,8 +99,8 @@ class MarkerModal extends Component {
                 <p className="card-text">
                   <a className="btn btn-outline-secondary btn-sm mr-1" target="_blank" title="event link" href={event.link}><i className="fas fa-external-link-alt"></i></a>
                   {facebook}
-                  <button className="btn btn-outline-secondary btn-sm mr-1" title="view on map" data-dismiss="modal" aria-label="Close" onClick={() => {this.zoomOnMarker(event)}}><i className="fas fa-map-marker-alt"></i></button>
-                  <a className="btn btn-outline-secondary btn-sm mr-1" target="_blank" title="view on google maps" href={"https://www.google.com/maps/place/?q=place_id:" + event.venue.place_id}><i className="fas fa-compass"></i></a>
+                  {zoom_marker}
+                  {google_map_marker}
                   <button className="btn btn-outline-secondary btn-sm" title="like"><i className="fas fa-thumbs-up"></i></button>
                 </p>
               </div>
