@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import axios from 'axios';
 import Fuse from 'fuse-js-latest';
+import ReactGA from 'react-ga';
 import Map from './components/Map.js';
 import MarkerModal from './components/MarkerModal.js';
 import LoadingScreen from './components/LoadingScreen.js';
@@ -23,6 +24,9 @@ class App extends Component {
     this.filterRating = this.filterRating.bind(this);
     this.filterSearch = this.filterSearch.bind(this);
     this.changeDayFilter = this.changeDayFilter.bind(this);
+
+    ReactGA.initialize('UA-63645646-3');
+    ReactGA.pageview(window.location.pathname);
   }
 
   componentDidMount = async () => {
@@ -406,6 +410,8 @@ class App extends Component {
         </div>
         {/*<button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>*/}
 
+        {/*<button className="btn btn-success btn-feedback" onClick={this.scrapeEvents}>Feedback</button>*/}
+
         <div className="search-bar">
           <input type="search"
             className="form-control"
@@ -433,7 +439,7 @@ class App extends Component {
             <div className="col-md-12">
               <h4>Region</h4>
                 <select className="form-control" id="region-select" value={this.props.settings.region} onChange={this.handleRegionChange}>
-                  <option value="0">All (experimental)</option>
+                  <option value="0">All</option>
                   <option value="1">SF Bay Area</option>
                   <option value="2">Los Angeles</option>
                   <option value="3">Atlanta</option>
