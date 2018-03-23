@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import '../App.css';
+const actions = require('../actions/index');
 
 class MarkerModal extends Component {
 
@@ -10,6 +11,7 @@ class MarkerModal extends Component {
     this.state = {
       modalGroupBy: 'events',
     }
+    this.zoomOnMarker = this.zoomOnMarker.bind(this);
   }
 
   sortByVenue(events) {
@@ -34,6 +36,11 @@ class MarkerModal extends Component {
     return venues;
   }
 
+  zoomOnMarker(event) {
+    this.props.setWindowCenter(event.venue.location);
+    this.props.setWindowZoom(16);
+  }
+
   handleVenueClick(e) {
     try {
       let venueList = e.target.parentNode.getElementsByClassName('venue-events-list')[0];
@@ -48,21 +55,63 @@ class MarkerModal extends Component {
     const handleVenueClick = this.handleVenueClick;
     if (this.state.modalGroupBy === 'events') {
       events = this.props.modalEvents.map((event, i) => {
+        let event_age;
+        if (event.age) {
+          event_age = (
+            <div className="event-age">
+              {event.age}
+            </div>);
+        }
+        let event_price;
+        if (event.price) {
+          event_price = (
+            <div className="event-price">
+              {event.price}
+            </div>);
+        }
+        let facebook = event.facebook ? (<a className="btn btn-outline-secondary btn-sm mr-1" target="_blank" title="facebook" href={event.facebook}><i className="fab fa-facebook-square"></i></a>) : undefined;
         return (
-          <a className="list-group-item list-group-item-action flex-column align-items-start" target="_blank" href={event.link} key={event.id}>
-            <h5 className="mb-1">{event.title}</h5>
-            <div className="d-flex w-100  justify-content-between">
-              <p className="mb-0">{event.venue.name}</p>
-              <p className="mb-0">{event.time} | {new Date(event.date).toDateString()}</p>
+          <div className="list-group-item" key={event.id}>
+
+            <div className="d-flex mb-2">
+              {event_age}
+              {event_price}
+              <div className="ml-auto event-date">
+                {new Date(event.date).toLocaleDateString("en-US")}
+              </div>
+
             </div>
-            <div className="mt-2">
-              {event.tags.map((tag, i) => {
-                return (<div className="tag" style={{ backgroundColor: '#2364ce' }} key={i}>{tag}</div>);
-              })}
+
+            <div className="d-flex mb-1">
+              <h5 className="mb-0">
+                {event.title}
+              </h5>
+            </div>
+
+            <div className="d-flex align-items-center">
+              <p className="mb-0">
+                {event.venue.name}
+              </p>
+              <div className="ml-auto">
+                <p className="card-text">
+                  <a className="btn btn-outline-secondary btn-sm mr-1" target="_blank" title="event link" href={event.link}><i className="fas fa-external-link-alt"></i></a>
+                  {facebook}
+                  <button className="btn btn-outline-secondary btn-sm mr-1" title="view on map" data-dismiss="modal" aria-label="Close" onClick={() => {this.zoomOnMarker(event)}}><i className="fas fa-map-marker-alt"></i></button>
+                  <a className="btn btn-outline-secondary btn-sm mr-1" target="_blank" title="view on google maps" href={"https://www.google.com/maps/place/?q=place_id:" + event.venue.place_id}><i className="fas fa-compass"></i></a>
+                  <button className="btn btn-outline-secondary btn-sm" title="like"><i className="fas fa-thumbs-up"></i></button>
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-0">
               {event.organizers.map((organizer, i) => {
-                return (<div className="tag" style={{ backgroundColor: '#00a9ff' }} key={i}>{organizer}</div>);})}
+                return (<small className="text-muted tag" key={i}>{organizer}, </small>);
+              })}
+              {event.tags.map((tag, i) => {
+                return (<small className="text-muted tag" key={i}>{tag}, </small>);
+              })}
             </div>
-          </a>)
+          </div>)
       })
     } else if (this.state.modalGroupBy === 'venues') {
       events = this.sortByVenue(this.props.modalEvents).map((venue, i) => {
@@ -101,7 +150,8 @@ class MarkerModal extends Component {
           <div className="modal-content">
 
             <div className="modal-header">
-
+              <h5 className="mb-0">Events</h5>
+{/*
               <div className="btn-group btn-group-toggle">
                 <label className={this.state.modalGroupBy === 'events' ? "btn btn-info active" : "btn btn-info"}>
                   <input onChange={() => this.setState({ modalGroupBy: 'events' })} type="radio" name="options" id="group-by-event" autoComplete="off" checked={this.state.modalGroupBy === 'events' ? true : false}/> Event
@@ -109,7 +159,7 @@ class MarkerModal extends Component {
                 <label className={this.state.modalGroupBy === 'venues' ? "btn btn-info active" : "btn btn-info"}>
                   <input onChange={() => this.setState({ modalGroupBy: 'venues' })} type="radio" name="options" id="group-by-venue" autoComplete="off" checked={this.state.modalGroupBy === 'venues' ? true : false}/> Venue
                 </label>
-              </div>
+              </div>*/}
 
               <button type="button" className="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -117,7 +167,7 @@ class MarkerModal extends Component {
             </div>
 
             <div className="modal-body">
-              <div className="list-group">
+              <div id="events_list" className="list-group">
               {events}
               </div>
             </div>
@@ -136,7 +186,10 @@ const mapStateToProps = (state) => {
 }
 
 const mapDispatchToProps = (dispatch) => {
-  return {};
+  return {
+    setWindowCenter: (center) => dispatch(actions.setWindowCenter(center)),
+    setWindowZoom: (zoom) => dispatch(actions.setWindowZoom(zoom)),
+  };
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MarkerModal);

@@ -26,17 +26,14 @@
 }
 .tba-events-counter {
   z-index: 9;
-  position: absolute;
-  top: 80px;
-  left: 20px;
-  background: rgba(0,0,0,0.5);
+  top: 40px;
+  text-align: center;
+  background: rgba(230,0,0,0.5);
   color: #FFF;
-  font-size: 20px;
-  font-weight: bold;
-  line-height: 20px;
-  padding: 10px;
+  font-size: 14px;
+  padding: 4px 10px;
+  margin-top: 8px;
   border-radius: .25rem;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
 }
 .events-counter {
   z-index: 9;
@@ -133,6 +130,7 @@ input[type="search"]::-webkit-search-cancel-button {
   background: rgba(255,255,255,0.8);
   z-index: 9;
   padding: 20px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
 }
 .settings-container.hide {
   right: -400px;
@@ -141,21 +139,18 @@ input[type="search"]::-webkit-search-cancel-button {
 
 .settings-container.hide .btn-settings {
   position: absolute;
-  width: 100px;
   top: 20px;
-  left: -120px;
+  left: -60px;
   transition: 0.3s;
   opacity: 0.8;
   box-shadow: 0 3px 10px rgba(0,0,0,0.2);
 }
 .settings-container .btn-settings {
-  content: 'Hide';
   transition: 0.3s;
   z-index: 999;
   position: absolute;
-  width: 80px;
   top: 20px;
-  left: 300px;
+  left: 340px;
 }
 #settings .days-btns {
   display: inline-flex;
@@ -194,6 +189,11 @@ input[type="search"]::-webkit-search-cancel-button {
   max-width: 600px;
 }
 
+#eventsModal .modal-content {
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+
 #eventsModal .modal-body {
   height: 500px;
   padding: 0;
@@ -210,6 +210,24 @@ input[type="search"]::-webkit-search-cancel-button {
   overflow: hidden;
 }
 
+.event-age {
+  font-size: 12px;
+  color: #FFF;
+  padding: 4px 12px;
+  background: rgba(71,108,155,0.8);
+}
+.event-price {
+  font-size: 12px;
+  color: #FFF;
+  padding: 4px 12px;
+  background: rgba(35,57,91,0.8);
+}
+.event-date {
+  font-size: 12px;
+  color: #FFF;
+  padding: 4px 12px;
+  background: rgba(187,68,48,0.8);
+}
 
 .cards-container .list-group-item {
   background: rgba(255,255,255,0.5);
@@ -250,16 +268,13 @@ input[type="search"]::-webkit-search-cancel-button {
   background: rgba(247, 120, 9, 0.9);
 }
 
-.tags {
-  margin-top: 6px;
-}
 .tag {
-  border-radius: 5px;
-  margin: 2px;
-  padding: 3px 8px;
-  font-size: 12px;
-  color: #FFF;
-  display: inline-block;
+  /*padding: 3px 8px;*/
+  /*font-size: 12px;*/
+  /*color: #FFF;*/
+  font-style: italic;
+  text-transform: capitalize;
+  /*display: inline-block;*/
 }
 .tag:first-of-type {
   margin-left: 0;

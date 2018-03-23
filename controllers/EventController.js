@@ -91,7 +91,6 @@ exports.findByVenue = async (req, res) => {
 
 exports.fetchEvents = async (req, res) => {
   try {
-    console.log('fetching events');
     let events_found = 0;
     let region = req.params.region || 1;
     let link = 'https://19hz.info/events_LosAngeles.csv';
@@ -118,12 +117,12 @@ exports.fetchEvents = async (req, res) => {
         link = 'https://19hz.info/events_Massachusetts.csv';
         break;
     }
-    console.log(link);
     await request.get(link, (err, response, result) => {
       if (!err && response.statusCode === 200) {
         // result = date, title, tags, venue, time, price, age, organizers, link, fb, excel date
-        csv.parse(result, (error, data) => {
-          data.map( async (row) => {
+        let events;
+        csv.parse(result, async (error, data) => {
+          events = data.map( async (row) => {
             let exists = await Event.findByNameAndRegion(row[1], region);
             if (exists.success && exists.result.length < 1) {
               let venue_name = (row[3]).split(' (')[0];
@@ -137,7 +136,6 @@ exports.fetchEvents = async (req, res) => {
                 }
                 if (venue_id) {
                   let new_date = new Date((parseFloat(row[10], 10) - 2.047 - (70 * 365.2422)) * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
-                    console.log('createing event: ' + (row[1]).split(' (')[0] + ' in region ' + region);
                   let event = await Event.create({
                     event_date: new_date,
                     time: row[4],
@@ -161,6 +159,7 @@ exports.fetchEvents = async (req, res) => {
                       let tag = await Tag.findOrCreate(tags[j]);
                       let tag_link = await Tag.linkToEvent(event.id, tag.result[0].id);
                   }
+                  return event;
                 }
               } else {
                 console.error('COULD NOT GET VENUE');
@@ -169,7 +168,8 @@ exports.fetchEvents = async (req, res) => {
               console.error('EVENT EXIST');
             }
           });
-            console.log('Found ' + events_found + ' events');
+          let result = await Promise.all(events);
+          console.log('Found ' + events_found + ' events');
           return res.sendStatus(200);
         });
       } else {

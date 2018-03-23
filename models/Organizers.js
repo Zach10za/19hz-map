@@ -41,10 +41,8 @@ exports.findOrCreate = function(name) {
         db.get().query('SELECT * FROM organizers WHERE LOWER(organizer) = LOWER(?)', name, function(err, result) {
             if (err) return reject(err);
             if (result.length > 0) {
-                console.log("Found existing organizer");
                 return resolve({ success: true, result: result });
             } else {
-                console.log("New organizer being created");
                 exports.create(name).then(result => {
                     if (result.success) {
                         exports.findById(result.id).then(result => {

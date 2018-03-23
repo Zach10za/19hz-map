@@ -47,7 +47,6 @@ exports.getAll = function(req, res) {
 
 exports.fetchVenues = async (req, res) => {
   try {
-    console.log('fetching venues');
     let venues_found = 0;
     let region = req.params.region || 1;
     let link = 'https://19hz.info/venues_LosAngeles.csv';
@@ -78,7 +77,7 @@ exports.fetchVenues = async (req, res) => {
       if (!err && response.statusCode === 200) {
         console.log('fetching venues from ', link);
         // result = name, address, link, fb
-        let tba = await Venue.findById(1);
+        let tba = await Venue.findByNameAndRegion('TBA', region);
         if (tba.success && tba.result.length < 1) {
           await Venue.create({
             name: 'TBA',
@@ -93,14 +92,14 @@ exports.fetchVenues = async (req, res) => {
             region: region,
           });
         }
-        csv.parse(result, (error, data) => {
-          data.map( async (row) => {
+        let venues;
+        csv.parse(result, async (error, data) => {
+          venues = await data.map( async (row) => {
             let exists = await Venue.findByAddressAndRegion(row[1], region);
             if (exists.success && exists.result.length < 1) {
               let precise_location = await exports.getPreciseLocation(row[1]);
-              if (precise_location) {
-                console.log('creating venue: ' + row[0] + ' in region ' + region);
-                await Venue.create({
+              if (precise_location && precise_location.geometry.location) {
+                let venue = await Venue.create({
                   name: row[0],
                   link: row[2],
                   fb: row[3],
@@ -113,6 +112,7 @@ exports.fetchVenues = async (req, res) => {
                   region: region,
                 });
                 venues_found++;
+                return venue;
               } else {
                 console.error('COULD NOT GET PRECISE LOCATION');
               }
@@ -120,7 +120,8 @@ exports.fetchVenues = async (req, res) => {
               if (exists.message) console.error(message);
             }
           });
-          console.log('Found ' + venues_found + 'venues');
+          let result = await Promise.all(venues);
+          console.log('Found ' + venues_found + ' venues');
           return res.sendStatus(200);
         });
       } else {

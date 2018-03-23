@@ -33,7 +33,7 @@ exports.create = function(venue) {
     });
 }
 
-exports.findByName = function(name) {
+exports.findByName = async (name) => {
     return new Promise((resolve, reject) => {
         db.get().query('SELECT * FROM venues WHERE name = ?', name, function(err, result) {
             if (err) return reject(err);

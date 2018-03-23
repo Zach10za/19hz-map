@@ -105,13 +105,15 @@ class App extends Component {
       if (prompt("Enter secret to continue.") === '19hz') {
         let r = parseInt(prompt("Enter region (1-7)"),10);
         if (r===1 || r===2 || r===3 || r===4 || r===5 || r===6 || r===7) {
-          // await axios.get(`/api/venues/fetch/${r}`);
+          await axios.get(`/api/venues/fetch/${r}`);
           await axios.get(`/api/scrape/${r}`);
+          this.getEvents(this.props.settings.region);
         } else if (r === 0) {
           for (let i = 1; i < 8; i++) {
-            // await axios.get(`/api/venues/fetch/${i}`);
+            await axios.get(`/api/venues/fetch/${i}`);
             await axios.get(`/api/scrape/${i}`);
           }
+          this.getEvents(this.props.settings.region);
         } else {
           alert("Must enter a number 1-7");
         }
@@ -398,9 +400,9 @@ class App extends Component {
         <MarkerModal events={this.props.modalEvents} />
         <div className="events-counter">
           {this.props.currentEvents.length} Events
-        </div>
-        <div className="btn tba-events-counter" onClick={() => this.props.setModalEvents(this.props.tbaEvents)} data-toggle="modal" data-target="#eventsModal">
-          {this.props.tbaEvents.length} TBA
+          <div className="tba-events-counter" style={{display: this.props.tbaEvents.length > 0 ? "block" : "none"}} onClick={() => this.props.setModalEvents(this.props.tbaEvents)} data-toggle="modal" data-target="#eventsModal">
+            {this.props.tbaEvents.length} TBA
+          </div>
         </div>
         <button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>
 
@@ -417,7 +419,9 @@ class App extends Component {
           <button className="btn btn-primary btn-settings"
             data-toggle="button"
             aria-pressed={this.props.showSettings}
-            onClick={() => this.props.setShowSettings(!this.props.showSettings)}>{ this.props.showSettings ? 'Hide' : 'Settings'}</button>
+            onClick={() => this.props.setShowSettings(!this.props.showSettings)}>
+            <i className="fas fa-bars"></i>
+            </button>
 
           <div className="row mb-5">
             <div className="col-md-12">
