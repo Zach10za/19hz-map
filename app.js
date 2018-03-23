@@ -5,6 +5,9 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var db = require('./db')
+var cron = require('node-cron');
+const EventController = require('./controllers/EventController.js');
+const VenueController = require('./controllers/VenueController.js');
 
 
 var index = require('./routes/index');
@@ -46,6 +49,16 @@ db.connect(function(err) {
     }
 })
 
+// fetch venues and events
+cron.schedule('0 0 4 * * *', async () => {
+  console.log('running cron');
+  try {
+    await VenueController.fetchAllVenues();
+    await EventController.fetchAllEvents();
+  } catch (err) {
+    console.error(err);
+  }
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

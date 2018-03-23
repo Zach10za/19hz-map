@@ -144,32 +144,79 @@ exports.getPreciseLocation = async (venue_address) => {
 }
 
 
-// exports.getAndStorePreciseLocation = async (location) => {
-//     try {
-//         const exists = await Venue.findByName(location);
-//         if (exists.success) {
-//             if (exists.result[0].place_id) {
-//                 console.log("Precise location has already been stored.");
-//             } else {
-//                 console.log("Venue found. Getting precise location for: " + location);
-//                 const places_result = await googleMaps.places({query: req.body.location, language: 'en'}).asPromise();
-//                 let venue = {
-//                     id: exists.result[0].id,
-//                     name: places_result.json.results[0].name,
-//                     place_id: places_result.json.results[0].place_id,
-//                     address: places_result.json.results[0].formatted_address,
-//                     price_level: places_result.json.results[0].price_level,
-//                     rating: places_result.json.results[0].rating,
-//                     lat: places_result.json.results[0].geometry.location.lat,
-//                     lng: places_result.json.results[0].geometry.location.lng,
-//                 };
-//                 const venue_result = await Venue.storePreciseInfo(venue);
-//                 console.log("Precise Location stored");
-//             }
-//         } else {
-//             console.log( "Venue does not exist" );
-//         }
-//     } catch(err) {
-//         return err;
-//     }
-// }
+
+exports.fetchAllVenues = async () => {
+  try {
+    let venues_found = 0;
+    let region = 1;
+    let links = [
+        'https://19hz.info/venues_BayArea.csv',
+        'https://19hz.info/venues_LosAngeles.csv',
+        'https://19hz.info/venues_Atlanta.csv',
+        'https://19hz.info/venues_Texas.csv',
+        'https://19hz.info/venues_Miami.csv',
+        'https://19hz.info/venues_Phoenix.csv',
+        'https://19hz.info/venues_Massachusetts.csv',
+    ];
+    for (let x=0; x < links.length; x++) {
+      region = x + 1;
+      request.get(links[x], async (err, response, result) => {
+        if (!err && response.statusCode === 200) {
+          console.log('fetching venues from ', links[x]);
+          // result = name, address, link, fb
+          let tba = await Venue.findByNameAndRegion('TBA', region);
+          if (tba.success && tba.result.length < 1) {
+            await Venue.create({
+              name: 'TBA',
+              link: null,
+              fb: null,
+              place_id: null,
+              address: null,
+              price_level: null,
+              rating: null,
+              lat: 0,
+              lng: 0,
+              region: region,
+            });
+          }
+          let venues;
+          csv.parse(result, async (error, data) => {
+            venues = await data.map( async (row) => {
+              let exists = await Venue.findByAddressAndRegion(row[1], region);
+              if (exists.success && exists.result.length < 1) {
+                let precise_location = await exports.getPreciseLocation(row[1]);
+                if (precise_location && precise_location.geometry.location) {
+                  let venue = await Venue.create({
+                    name: row[0],
+                    link: row[2],
+                    fb: row[3],
+                    place_id: precise_location.place_id,
+                    address: row[1],
+                    price_level: precise_location.price_level,
+                    rating: precise_location.rating,
+                    lat: precise_location.geometry.location.lat,
+                    lng: precise_location.geometry.location.lng,
+                    region: region,
+                  });
+                  venues_found++;
+                  return venue;
+                } else {
+                  console.error('COULD NOT GET PRECISE LOCATION');
+                }
+              } else {
+                if (exists.message) console.error(message);
+              }
+            });
+            let result = await Promise.all(venues);
+            console.log('Found ' + venues_found + ' venues');
+            return result;
+          });
+        } else {
+          console.error('PROBLEM FETCHING VENUES');
+        }
+      });
+    }
+  } catch(err) {
+    console.error('FETCH VENUES ERROR:', err);
+  }
+}
