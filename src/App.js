@@ -48,7 +48,7 @@ class App extends Component {
       // const response = await fetch('/api/venues/fetch/1');
       // const response = await fetch('/api/scrape/1');
       if (parseInt(region, 10) < 1) region = '';
-      const response = await fetch('/api/events/'+region);
+      const response = await fetch('https://api.19hz-map.info/events/'+region);
       const body = await response.json();
       console.log(body.result.length + ' events found');
 

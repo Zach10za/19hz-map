@@ -1,0 +1,9 @@
+{
+    "apps": [
+        {
+            "name": "19hz-map-client",
+            "script": "yarn",
+            "args": "start"
+        }
+    ]
+}
