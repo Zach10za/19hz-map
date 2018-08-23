@@ -25,13 +25,13 @@ class App extends Component {
     this.filterSearch = this.filterSearch.bind(this);
     this.changeDayFilter = this.changeDayFilter.bind(this);
 
-    ReactGA.initialize('UA-63645646-3');
+    ReactGA.initialize('UA-63645646-3', { debug: false });
+    ReactGA.set({ page: window.location.pathname });
     ReactGA.pageview(window.location.pathname);
   }
 
   componentDidMount = async () => {
     try {
-
       let tzoffset = (new Date()).getTimezoneOffset() * 60000;
       let date = (new Date(Date.now() - tzoffset)).toISOString().substring(0,10);
       this.props.setSettingsDateRange({ min: date, max: '' });
@@ -309,8 +309,14 @@ class App extends Component {
     this.props.setSettingsDateRange(dateRange);
     this.filter();
   }
+
   handleRegionChange = async (e) => {
     let value = parseInt(e.target.value, 10);
+    ReactGA.event({
+      category: 'Filter',
+      action: 'Region',
+      value
+    });
     let center = this.props.window.center;
     let zoom = 10;
     switch (value) {
