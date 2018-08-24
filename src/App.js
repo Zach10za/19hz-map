@@ -439,9 +439,9 @@ class App extends Component {
           </span>
         </div>
         
-          <div className="row mb-5">
+          <div className="row mb-3">
             <div className="col-md-12">
-              <h4>Region</h4>
+              {/* <h4>Region</h4> */}
                 <select className="form-control" id="region-select" value={this.props.settings.region} onChange={this.handleRegionChange}>
                   <option value="0">All</option>
                   <option value="1">SF Bay Area</option>
@@ -456,23 +456,19 @@ class App extends Component {
           </div>
 
 
-          <div className="row mb-5">
+          <div className="row mb-3">
             <div className="col-md-12">
               <h4>Date Range</h4>
 
               <div className="form-row">
-                <div className="col-md-6">
                   <input type="date" className="form-control" id="min-date" value={settings.dateRange.min} onChange={this.handleDateRangeChange.bind(this)}/>
-                </div>
-                <div className="col-md-6">
                   <input type="date" className="form-control" id="max-date" value={settings.dateRange.max} onChange={this.handleDateRangeChange.bind(this)}/>
-                </div>
               </div>
 
             </div>
           </div>
 
-          <div className="row mb-5">
+          <div className="row mb-3">
             <div className="col-md-12">
               <h4>Days of the Week</h4>
               <div className="days-btns">
@@ -487,7 +483,7 @@ class App extends Component {
             </div>
           </div>
 
-          <div className="row mb-5">
+          <div className="row">
             <div className="col-md-12">
               <div className="d-flex w-100  justify-content-between">
                 <h4 style={{ opacity: this.props.settings.radius > 0 ? '1' : '0.5' }}>Location Radius</h4>

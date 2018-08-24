@@ -26,9 +26,9 @@ class LoginScreen extends Component {
 
   hideLoginScreen() {
     const loginFormContainer = document.getElementById("login-form-container");
-    loginFormContainer.style.bottom = "-62vh";
+    loginFormContainer.style.bottom = "-70vh";
     const loginTitle = document.getElementById("login-title");
-    loginTitle.style.top = "-20vh";
+    loginTitle.style.top = "-30vh";
     const loginBG = document.getElementById("login-bg");
     loginBG.style.opacity = 0;
     this.props.setLoggedIn();
