@@ -6,6 +6,7 @@ import ReactGA from 'react-ga';
 import Map from './components/Map.js';
 import MarkerModal from './components/MarkerModal.js';
 import LoadingScreen from './components/LoadingScreen.js';
+import LoginScreen from './components/LoginScreen.js';
 const actions = require('./actions/index');
 
 class App extends Component {
@@ -13,7 +14,8 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      search: ''
+      search: '',
+      loggedIn: false,
     }
     this.getEvents = this.getEvents.bind(this);
     this.handleRegionChange = this.handleRegionChange.bind(this);
@@ -50,7 +52,7 @@ class App extends Component {
       if (parseInt(region, 10) < 1) region = '';
       const response = await fetch('https://api.19hz-map.info/events/'+region);
       const body = await response.json();
-      console.log(body.result.length + ' events found');
+      // console.log(body.result.length + ' events found');
 
       let events = [];
       let tba_events = [];
@@ -403,9 +405,10 @@ class App extends Component {
     if (this.props.isLoading) {
       loading = (<LoadingScreen />);
     }
-    return (
-      <div className="App row app-row">
-      <div className="overlay">
+    let overlay;
+    if (this.state.loggedIn) {
+      overlay = (
+      <div className="overlay" style={{transition: '0.4s'}}>
         {loading}
         <MarkerModal events={this.props.modalEvents} />
         <div className="events-counter">
@@ -544,10 +547,15 @@ class App extends Component {
 
         </div>
 
-        </div>
+        </div>)
+      }
+      return (
+        <div className="App row app-row">
+        {overlay}
         <div className="map-container">
           <Map ref="gmap" />
         </div>
+        <LoginScreen setLoggedIn={() => this.setState({loggedIn: true})} />
       </div>
     );
   }

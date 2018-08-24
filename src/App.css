@@ -1,4 +1,5 @@
 .App {
+  overflow: hidden;
 }
 
 .btn-test {
@@ -296,4 +297,143 @@ input[type="search"]::-webkit-search-cancel-button {
 
 body {
   background-color: #FAFAFA;
+}
+
+
+/*Login Screen*/
+.login-screen {
+
+}
+.login-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: #17263C;
+  z-index: -1;
+  transition: 0.4s;
+}
+.login-title {
+  text-align: center;
+  color: #FFF;
+  top: 15vh;
+  position: absolute;
+  left: 0;
+  right: 0;
+  transition: 0.4s;
+}
+.login-title h1 {
+  margin: 0;
+  line-height: 3.5rem;
+  font-size: 4rem;
+  text-shadow: 0 0 5px rgba(0,0,0,0.4);
+}
+.login-title h1:last-of-type {
+  color: rgba(226, 120, 0, 1);
+  font-weight: bold;
+  font-size: 4.5rem;
+}
+.login-form-container {
+  position: absolute;
+  bottom: 0;
+  height: 62vh;
+  width: 100%;
+  background: rgba(226, 120, 0, 0.8);
+  transition: 0.4s;
+  -webkit-clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 30%);
+  clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 30%);
+}
+
+.login-form-container::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  height: 58vh;
+  width: 100%;
+  background: rgba(170, 74, 9, 0.562);
+  transition: 0.4s;
+  -webkit-clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 25%);
+  clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 25%);
+}
+.login-form-container-large {
+  -webkit-clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 17%);
+  clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 17%);
+}
+.login-form-container-large.login-form-container::before {
+  -webkit-clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 12%);
+  clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 12%);
+}
+
+.login-form {
+  /* background: red; */
+  width: 100%;
+  top: 30%;
+  position: absolute;
+  height: 300px;
+  z-index: 999;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+  max-width: 400px;
+  transition: 0.3s;
+}
+
+.login-form-container-large .login-form {
+  top: 20%;
+  height: 350px;
+}
+
+.login-form input {
+  display: block;
+  background: none;
+  border: none;
+  margin: 0px auto 10px;
+  padding: 5px 20px;
+  width: 70%;
+  color: #FFF;
+  font-size: 1rem;
+  transition: 0.2s;
+}
+.login-form label {
+  display: block;
+  width: 70%;
+  text-align: left;
+  margin: 0 auto;
+  color: #FFF;
+  font-size: 0.8rem;
+}
+.login-form input[type="text"], .login-form input[type="password"] {
+  border-bottom: 2px solid #FFF;
+}
+.login-form button {
+  border: 3px solid #FFF;
+  color: #FFF;
+  display: block;
+  background: none;
+  margin: 0px auto 10px;
+  padding: 5px 20px;
+  width: 70%;
+  font-size: 1rem;
+  transition: 0.2s;
+}
+.login-form .btn-login:hover, button.btn-signup {
+  background: #FFF;
+  color: rgb(168, 90, 0);
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: #FFF !important;
+}
+.login-skip {
+  display: block;
+  width: 70%;
+  text-align: center;
+  margin: 0 auto;
+  color: #FFF;
+  font-size: 0.9rem;
+  text-decoration: underline;
 }

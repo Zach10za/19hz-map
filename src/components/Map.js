@@ -68,7 +68,6 @@ class Map extends Component {
       disableDefaultUI: true,
       styles: customStyles,
     }
-    console.log(customStyles);
     return (
       <GoogleMapReact
         bootstrapURLKeys={{key: this.apiKey}} 
