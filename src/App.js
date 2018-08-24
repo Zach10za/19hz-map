@@ -411,12 +411,6 @@ class App extends Component {
       <div className="overlay" style={{transition: '0.4s'}}>
         {loading}
         <MarkerModal events={this.props.modalEvents} />
-        <div className="events-counter">
-          {this.props.currentEvents.length} Events
-          <div className="tba-events-counter" style={{display: this.props.tbaEvents.length > 0 ? "block" : "none"}} onClick={() => this.props.setModalEvents(this.props.tbaEvents)} data-toggle="modal" data-target="#eventsModal">
-            {this.props.tbaEvents.length} TBA
-          </div>
-        </div>
         {/*<button className="btn btn-danger btn-sm btn-scrape-events" onClick={this.scrapeEvents}>Scrape Events</button>*/}
 
         {/*<button className="btn btn-success btn-feedback" onClick={this.scrapeEvents}>Feedback</button>*/}
@@ -428,22 +422,23 @@ class App extends Component {
             placeholder="Search for events, venues, artists..."
             value={this.state.search}
             onChange={this.liveSearch.bind(this)}/>
+            <button className="btn btn-settings"
+              data-toggle="button"
+              aria-pressed={this.props.showSettings}
+              onClick={() => this.props.setShowSettings(!this.props.showSettings)}>
+              <i className="fas fa-bars"></i>
+              </button>
         </div>
 
         <div id="settings" className={"settings-container" + (this.props.showSettings ? "" : " hide")}>
-          <button className="btn btn-primary btn-settings"
-            data-toggle="button"
-            aria-pressed={this.props.showSettings}
-            onClick={() => this.props.setShowSettings(!this.props.showSettings)}>
-            <i className="fas fa-bars"></i>
-            </button>
-
-          <div className="row mb-5">
-            <div className="col-md-12">
-              <h1 className="display-4">Settings</h1>
-            </div>
-          </div>
-
+          
+        <div className="events-counter">
+          {this.props.currentEvents.length} Events
+          <span className="tba-events-counter" style={{display: this.props.tbaEvents.length > 0 ? "inline-block" : "none"}} onClick={() => this.props.setModalEvents(this.props.tbaEvents)} data-toggle="modal" data-target="#eventsModal">
+            ({this.props.tbaEvents.length} TBA)
+          </span>
+        </div>
+        
           <div className="row mb-5">
             <div className="col-md-12">
               <h4>Region</h4>

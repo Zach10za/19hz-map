@@ -26,7 +26,7 @@ class Marker extends Component {
       height: this.props.size ? this.props.size : (num_events > 1 ? '30px' : '20px'), 
       width: this.props.size ? this.props.size : (num_events > 1 ? '30px' : '20px'), 
       lineHeight: num_events > 1 ? '30px' : '20px',
-      backgroundColor: num_events > 1 ? '#2D7FE8' : num_events < 1 ? 'purple' : '#00A6FF',
+      backgroundColor: num_events > 1 ? 'rgba(226, 120, 0, 1)' : num_events < 1 ? 'purple' : 'rgba(226, 120, 0, 1)',
       opacity: this.state.opacity,
       zIndex: num_events
     }
