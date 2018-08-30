@@ -457,4 +457,22 @@ input:-webkit-autofill:active {
   color: #FFF;
   font-size: 0.9rem;
   text-decoration: underline;
+  cursor: pointer;
+}
+
+.btn-profile {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1;
+  background: rgba(226,120,0,0.8);;
+  height: 60px;
+  width: 60px;
+  border: none;
+  border-radius: 30px;
+  color: #FFF;
+  box-shadow: 0 3px 10px 1px rgba(0,0,0,0.3);
+}
+.btn-profile:hover {
+  background: rgb(168, 90, 0);
 }

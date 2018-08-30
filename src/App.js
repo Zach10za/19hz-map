@@ -7,6 +7,7 @@ import Map from './components/Map.js';
 import MarkerModal from './components/MarkerModal.js';
 import LoadingScreen from './components/LoadingScreen.js';
 import LoginScreen from './components/LoginScreen.js';
+
 const actions = require('./actions/index');
 
 class App extends Component {
@@ -537,7 +538,7 @@ class App extends Component {
 
 
         </div>
-
+          {/* <button className="btn-profile"><FontAwesomeIcon icon="user-alt" /></button> */}
         </div>)
       }
       return (
