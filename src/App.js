@@ -7,6 +7,7 @@ import Map from './components/Map.js';
 import MarkerModal from './components/MarkerModal.js';
 import LoadingScreen from './components/LoadingScreen.js';
 import LoginScreen from './components/LoginScreen.js';
+import Profile from './components/Profile.js';
 
 const actions = require('./actions/index');
 
@@ -538,7 +539,6 @@ class App extends Component {
 
 
         </div>
-          {/* <button className="btn-profile"><FontAwesomeIcon icon="user-alt" /></button> */}
         </div>)
       }
       return (
@@ -547,6 +547,7 @@ class App extends Component {
         <div className="map-container">
           <Map ref="gmap" />
         </div>
+        {this.state.loggedIn ? (<Profile />) : ""}
         <LoginScreen setLoggedIn={() => this.setState({loggedIn: true})} />
       </div>
     );
