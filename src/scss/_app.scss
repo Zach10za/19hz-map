@@ -1,0 +1,17 @@
+.App {
+  height: 100vh;
+  width: 100%;
+  background: rgba($color: #000000, $alpha: 0.8)
+}
+
+.map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  transition: 0.2s;
+  &.half {
+    height: 60vh;
+  }
+}
