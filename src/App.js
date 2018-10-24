@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import Map from './components/Map';
 import Drawer from './components/Drawer';
 import Filters from './components/Filters';
+import LocationPicker from './components/LocationPicker';
 import { fetchEvents, calculateClusters, filter } from './utils';
 
 class App extends Component {
@@ -15,7 +16,8 @@ class App extends Component {
       drawer: [],
       zoom: 10,
       center: { lat: 34.0522, lng: -118.2437 },
-      loading: true,
+      loading: false,
+      locationPicker: false,
     }
   }
 
@@ -26,9 +28,7 @@ class App extends Component {
       state = JSON.parse(state);
       this.setState(state, console.log);
     } else {
-      await this.fetchLocation(2);
-      localStorage.setItem('state', JSON.stringify(this.state));
-      localStorage.setItem('updated_at', new Date().getDay());
+      this.setState({locationPicker: true})
     }
   }
 
@@ -37,7 +37,7 @@ class App extends Component {
     const zoom = location === "0" ? 5 : 10;
     const events = await fetchEvents(location);
     const clusters = calculateClusters(events, zoom);
-    this.setState({ events, filtered_events: events, clusters, zoom, center: CENTERS[location], drawer: [], loading: false }, () => {
+    this.setState({ events, filtered_events: events, clusters, zoom, center: CENTERS[location], drawer: [], loading: false, locationPicker: false }, () => {
       localStorage.setItem('state', JSON.stringify(this.state));
       localStorage.setItem('updated_at', new Date().getDay());
     });
@@ -68,11 +68,13 @@ class App extends Component {
   hideDrawer = () => {
     this.setState({ drawer: [] });
   }
+  
 
   render() {
+    const overlay = this.state.locationPicker ? (<LocationPicker pickLocation={async (loc) => {this.fetchLocation(loc)}}/>) : (<Filters filter={this.filterEvents} fetchLocation={this.fetchLocation} />);
     return (
       <div className="App">
-        <Filters filter={this.filterEvents} fetchLocation={this.fetchLocation} />
+        { overlay }
         <Drawer events={this.state.drawer} hideDrawer={this.hideDrawer} />
         <div className={"map-container"}>
           <Map 

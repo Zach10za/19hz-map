@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css?family=Lobster");
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -242,6 +243,51 @@ html {
           background: rgba(177, 107, 33, 0.185); }
           .filters-container .filters .filter-block .days-btns button.active {
             background: #e27800; }
+
+.location-picker-container {
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
+  background: rgba(82, 51, 16, 0.4); }
+  .location-picker-container .location-picker {
+    height: auto;
+    width: 100%;
+    max-width: 840px; }
+    .location-picker-container .location-picker button {
+      font-family: 'Lobster', cursive;
+      height: 200px;
+      width: 200px;
+      border: none;
+      margin: 5px;
+      background: rgba(209, 124, 27, 0.9);
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 26px;
+      box-shadow: 0 2px 10px 1px rgba(0, 0, 0, 0.5);
+      transition: 0.2s;
+      cursor: pointer; }
+      .location-picker-container .location-picker button:hover {
+        background: rgba(226, 120, 0, 0.9);
+        box-shadow: 0 4px 20px 1px rgba(0, 0, 0, 0.5); }
+    @media screen and (max-width: 1000px) {
+      .location-picker-container .location-picker {
+        max-width: 600px; }
+        .location-picker-container .location-picker button {
+          width: 140px;
+          height: 140px;
+          font-size: 18px; } }
+    @media screen and (max-width: 650px) {
+      .location-picker-container .location-picker {
+        width: 260px; }
+        .location-picker-container .location-picker button {
+          width: 120px;
+          height: 120px;
+          font-size: 16px; } }
 
 .loading-screen {
   width: 100%;
