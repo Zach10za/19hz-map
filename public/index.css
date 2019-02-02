@@ -254,26 +254,55 @@ html {
   justify-content: center;
   align-items: center;
   z-index: 99;
-  background: rgba(82, 51, 16, 0.4); }
+  background: rgba(82, 51, 16, 0.4);
+  overflow: hidden; }
   .location-picker-container .location-picker {
     height: auto;
     width: 100%;
-    max-width: 840px; }
-    .location-picker-container .location-picker button {
-      font-family: 'Lobster', cursive;
-      height: 200px;
-      width: 200px;
+    max-width: 600px; }
+    .location-picker-container .location-picker .tile {
+      position: relative;
+      height: 140px;
+      width: 140px;
       border: none;
       margin: 5px;
       background: rgba(209, 124, 27, 0.9);
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 26px;
       box-shadow: 0 2px 10px 1px rgba(0, 0, 0, 0.5);
+      display: inline-block;
       transition: 0.2s;
+      vertical-align: top;
       cursor: pointer; }
-      .location-picker-container .location-picker button:hover {
+      .location-picker-container .location-picker .tile:hover {
         background: rgba(226, 120, 0, 0.9);
         box-shadow: 0 4px 20px 1px rgba(0, 0, 0, 0.5); }
+      .location-picker-container .location-picker .tile button {
+        font-family: 'Lobster', cursive;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.8rem;
+        background: transparent;
+        width: 140px;
+        height: 140px;
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        border: none;
+        z-index: 9; }
+      .location-picker-container .location-picker .tile::before {
+        content: '';
+        background: rgba(226, 120, 0, 0.9);
+        position: absolute;
+        height: 0;
+        width: 0;
+        top: 70px;
+        left: 70px;
+        border-radius: 100%;
+        transform: translate(-50%, -50%);
+        z-index: 2; }
+      .location-picker-container .location-picker .tile.selected button {
+        border: 1px solid #FFF; }
+      .location-picker-container .location-picker .tile.selected::before {
+        animation: selectLocation 0.7s forwards; }
     @media screen and (max-width: 1000px) {
       .location-picker-container .location-picker {
         max-width: 600px; }
@@ -314,6 +343,14 @@ html {
   position: absolute;
   width: 6px;
   animation: sound 0ms -800ms linear infinite alternate; }
+
+@keyframes selectLocation {
+  0% {
+    width: 0;
+    height: 0; }
+  100% {
+    width: 200vmax;
+    height: 200vmax; } }
 
 @keyframes sound {
   0% {
